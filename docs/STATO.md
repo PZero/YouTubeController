@@ -12,9 +12,11 @@ _Ultimo aggiornamento: 2026-10-09_
 - Schema collegamenti in `firmware/README.md`: 18650 → TP4056 B+/B- → OUT+/OUT- → 5V/GND; encoder A/B su GPIO4/5; pulsante su GPIO7; partitore 220k/220k su GPIO1.
 - Scatola (`enclosure/`): Qi tolto; pulsante PBS-110 con cappuccio; manopola con sede zigrinata + `test_ring`; **portaschede** (`portaschede.scad`) avvitato al fondo con ESP32 capovolta, fori spillo RST/BOOT, TP4056, culla 18650; presa USB-C ricarica a X=-12; scritte disattivate; 3 piatti di stampa entro 180×180; interferenze verificate = 0.
 - Render in `docs/render/` (montato, retro, esploso, sezione, piatti).
+- Pagina di prova tastiera/focus (`app/test/`) online su https://pzero.github.io/YouTubeController/test/ (GitHub Pages via Actions, pubblica solo `app/`).
+- Chiave API YouTube creata dall'utente (con restrizioni), conservata fuori dal repo; andrà inserita nelle impostazioni della PWA sull'iPad.
 
 ## Prossimi passi
-1. Avviare `app-pwa`: pagina di prova su GitHub Pages (video + registro tasti) per decidere i tasti che invierà il firmware.
+1. Test della pagina di prova sull'iPad (Safari e Home): l'utente incolla il registro ("Copia registro") + modello/versione iPadOS → scegliere i tasti del firmware e la strategia per il focus.
 2. All'arrivo dell'ESP32: misure col calibro (lista sotto), aggiornare i parametri, stampare `test_ring` e portaschede di prova (PETG).
 3. Prototipo su breadboard: firmware BLE HID (play/pausa, seek, pressione lunga 10 s = standby).
 
@@ -26,7 +28,6 @@ _Ultimo aggiornamento: 2026-10-09_
 - Margini stretti: culla 18650 a 0,5 mm dai condotti laterali; incastri ESP32 piccoli.
 - Corrente di carica: valutare R3 2,4 kΩ (0,5 A) in scatola chiusa.
 - OTA via WiFi: modalità access point con pressione lunga (da confermare con il ruolo del pulsante).
-- Chiave API YouTube Data v3 da creare (in `.env`, mai su GitHub).
 - Da comprare: viti M3x8 ×8, M2x5 ×4, contatti 18650 (vedi BOM).
 
 ## Fasi previste
