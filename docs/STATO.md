@@ -21,13 +21,13 @@ _Ultimo aggiornamento: 2026-10-09_
 3. Prototipo su breadboard: firmware BLE HID (play/pausa, seek, pressione lunga 10 s = standby).
 
 ## Problemi aperti
-- **Diodo SS14 su OUT+** (retroalimentazione verso la 18650 quando l'ESP32 è collegata al PC): decisione dell'utente. Senza diodo: scollegare sempre la batteria prima del flash.
+- **Primo flash con la batteria scollegata** (niente diodo: pin 5V = VBUS → rischio sulla 18650). Da scrivere nelle istruzioni di montaggio.
+- **OTA**: piano proposto in `firmware/README.md` (sezione OTA); l'utente deve confermare il gesto (pulsante + 5 scatti) e la build su GitHub Actions/Release.
 - Antenna ESP32 vicina alla 18650 (involucro metallico): verificare la portata BLE col prototipo.
 - Misure col calibro: SuperMini (spessore PCB, sporgenza USB-C), TP4056 (PCB, fori, USB-C, LED), encoder (bussola, albero, zigrinatura), PBS-110 (filetto, dado, tasto), cella e contatti.
 - LED di carica visibili dal retro? Dipende dalla posizione reale sul TP4056 (eventuale light pipe).
 - Margini stretti: culla 18650 a 0,5 mm dai condotti laterali; incastri ESP32 piccoli.
 - Corrente di carica: valutare R3 2,4 kΩ (0,5 A) in scatola chiusa.
-- OTA via WiFi: modalità access point con pressione lunga (da confermare con il ruolo del pulsante).
 - Da comprare: viti M3x8 ×8, M2x5 ×4, contatti 18650 (vedi BOM).
 
 ## Fasi previste

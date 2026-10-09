@@ -27,3 +27,4 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-09 | Hosting PWA: GitHub Pages | Gratuito, HTTPS, pubblica direttamente dal repository |
 | 2026-10-09 | Scartato il modulo di ricarica wireless "3IN1WPT_LICHARG" trovato dall'utente | Senza protezione evidente della cella, secondo caricatore da coordinare col TP4056, bobina vicina all'antenna: complessità non giustificata |
 | 2026-10-09 | Chiave API YouTube inserita dall'utente nelle impostazioni della PWA (salvata solo sul dispositivo) | Repository pubblico: nessuna chiave nel codice né nel sito pubblicato |
+| 2026-10-09 | Niente diodo su OUT+: la scheda va al PC solo per il primo flash, con la batteria scollegata; poi solo aggiornamenti OTA | Unica connessione USB prevista; evita la perdita di ~0,25 V di autonomia |

@@ -163,3 +163,13 @@ Autonomia stimata (18650 2500-3000 mAh, ~2000-2400 mAh utili fino a 3,4-3,5 V):
 - Encoder: Alps EC11E15244G1 https://tech.alpsalpine.com/e/products/detail/EC11E15244G1/ ; footprint KiCad RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm; Bourns PEC11R (albero zigrinato 18 denti)
 - Pulsante PBS-110: https://ifuturetech.org/?p=59198
 - MT3608, consumo a vuoto: https://hackaday.com/tag/mt3608/
+
+## OTA — proposta (da confermare con l'utente, 2026-10-09)
+La scheda va al PC una sola volta (primo flash, **batteria scollegata**); poi solo OTA.
+1. **Partizioni**: due slot app OTA (es. "Minimal SPIFFS 1.9MB APP with OTA"), scelte al primo flash: cambiarle in seguito richiede il cavo. NVS preservata (abbinamento BLE con l'iPad).
+2. **Rollback**: nuova immagine "in prova", marcata valida solo dopo auto-test (BLE avviato, input ok); altrimenti ritorno automatico alla precedente.
+3. **Attivazione**: WiFi spento nell'uso normale; modalità OTA con gesto distinto dallo standby (proposta: pulsante premuto + 5 scatti di manopola); uscita automatica dopo 5 min.
+4. **Aggiornamento da iPad**: access point `YTController-OTA` (WPA2), pagina su 192.168.4.1 con versione, upload del .bin da File, avanzamento. Eventualmente anche ArduinoOTA/espota.
+5. **Build su GitHub Actions** → .bin nelle Release. **Nessun segreto nel binario**: password dell'AP salvata in NVS via seriale al primo flash.
+6. **Controlli**: rifiuto sotto ~3,7 V di batteria; verifica immagine (dimensione/checksum, opzionale firma); recupero estremo via USB + fori spillo BOOT/RST.
+Feedback: LED interno non visibile → l'indicazione è la comparsa della rete WiFi.
