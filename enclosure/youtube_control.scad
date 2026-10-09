@@ -35,7 +35,7 @@ section_view  = false;       // sezione (solo assembly/exploded)
 cut_x         = 0;           // piano di sezione (si toglie il lato X > cut_x)
 section_shell = false;       // true: la sezione taglia solo scocca e pannelli (interno visibile)
 show_electronics = true;     // componenti (solo assembly/exploded)
-engrave_text  = true;        // scritte incise sulla faccia superiore
+engrave_text  = false;       // scritte incise sulla faccia superiore
 button_glyph  = false;       // simbolo play/pause inciso sul tasto
 fnt           = "Liberation Sans:style=Bold";
 

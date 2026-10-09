@@ -21,3 +21,5 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-09 | Foro per spillo sul fondo in corrispondenza del tasto RST della SuperMini | Reset senza aprire la scatola (la batteria resta sempre collegata) |
 | 2026-10-09 | Portabatteria 18650 stampato nel portaschede | L'utente non ha un portabatteria; resta tutto nel modulo intercambiabile |
 | 2026-10-09 | Stampa su più piatti (anche per colori diversi) | Il layout unico non entra nella A1 mini |
+| 2026-10-09 | Presa USB-C di ricarica spostata sul retro a X=-12 | Batteria a destra per non toccare il pulsante; a +14 il TP4056 urtava la torretta d'angolo |
+| 2026-10-09 | Niente scritte incise sulla scocca (engrave_text=false) | Decorazioni da valutare a progetto finito |
