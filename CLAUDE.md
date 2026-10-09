@@ -30,6 +30,7 @@ Oltre a eseguire, **proponi miglioramenti** e **segnala rischi e incongruenze** 
 - Un passo alla volta: prima un prototipo funzionante, poi le rifiniture.
 - Nessun componente hardware è dato per scontato: proponi sempre alternative con motivazione e costo indicativo.
 - Per **ogni componente** cerca datasheet, disegno quotato e modello 3D (STEP/STL) e registra le quote in `enclosure/dimensioni.md` con fonte e affidabilità.
+- **Mai credenziali nel repository** (pubblico su GitHub): token, chiavi API e password solo in `.env` (escluso da git). Controllare prima di ogni push.
 - Scatola modulare: gli alloggiamenti dell'elettronica stanno sul **portaschede** avvitato al fondo, non sulla scocca.
 - Se una scelta in un'area tocca le altre (es. cambia la scheda → cambia la scatola), dillo esplicitamente.
 
