@@ -10,6 +10,9 @@ Ogni voce va proposta con alternative e approvata dall'utente.
 | Caricatore + protezione batteria | modulo "4056" USB-C 4 fori: TP4056 (SOP-8) + DW01A (SOT-23-6) + FS8205A (TSSOP-8), pad B+ B- OUT+ OUT- | 1 | ~0,5-1 € | in possesso (fili già saldati su B+/B-) | carica 1 A con R3 = 1,2 kΩ (verificare marcatura "122"), fine carica 4,2 V; protezioni DW01A. Nessun load sharing. Collegamento in `firmware/README.md` |
 | Batteria | Li-ion 18650 | 1 | ~4-8 € | da confermare | capacità 2500-3000 mAh; cella NON protetta va bene (protezione nel modulo) |
 | Protezione da retroalimentazione USB | da scegliere: (a) Schottky SS14/1N5817 in serie OUT+ → 5V; (b) interruttore a slitta SS12D00 su OUT+; (c) entrambi | 1 | (a) ~0,05-0,1 €; (b) ~0,1-0,2 € | da scegliere | serve perché il pin 5V della SuperMini coincide con il VBUS USB: vedi `firmware/README.md`, Alimentazione |
+| Viti fondo/portaschede | M3x8 (o ST2,9x9,5) svasate autofilettanti | 8 | ~1 € | da comprare | 4 fondo-scocca + 4 portaschede-fondo |
+| Viti TP4056 | M2x5 autofilettanti (M1,6 se fori piccoli) | 4 | ~0,5 € | da comprare | colonnine del portaschede |
+| Contatti 18650 | coppia piastrina + molla ~11x12 mm (in alternativa 2 fascette 3,6 mm) | 1 | ~1-2 € | da comprare | sedi nella culla del portaschede |
 | Convertitore boost | modulo MT3608 (blu ~36x17 mm, induttore 22 µH, trimmer 3296W, SS34) | 1 | ~0,5-1 € | in possesso, **non usato** | OUT+ del TP4056 va direttamente (o via Schottky) al pin 5V: l'LDO ME6217C33 lavora già con 3,4-4,2 V; il boost aggiungerebbe consumo a vuoto (0,2-1,5 mA misurati da terzi, contro 43 µA della scheda in deep sleep) e il rischio di sovratensione dal trimmer mal regolato, senza pin EN |
 
 ## Specifiche chiave: ESP32-S3 SuperMini

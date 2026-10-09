@@ -23,3 +23,5 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-09 | Stampa su più piatti (anche per colori diversi) | Il layout unico non entra nella A1 mini |
 | 2026-10-09 | Presa USB-C di ricarica spostata sul retro a X=-12 | Batteria a destra per non toccare il pulsante; a +14 il TP4056 urtava la torretta d'angolo |
 | 2026-10-09 | Niente scritte incise sulla scocca (engrave_text=false) | Decorazioni da valutare a progetto finito |
+| 2026-10-09 | Repository pubblico su GitHub (PZero/YouTubeController), commit con email noreply; nessuna credenziale nel repo | Backup e pubblicazione della PWA con GitHub Pages; privacy dell'utente |
+| 2026-10-09 | Hosting PWA: GitHub Pages | Gratuito, HTTPS, pubblica direttamente dal repository |
