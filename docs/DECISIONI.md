@@ -11,3 +11,6 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-09 | CAD: OpenSCAD; base di partenza `enclosure/youtube_control.scad` fornito dall'utente | L'utente conosce OpenSCAD e ha già un modello di scatola |
 | 2026-10-09 | Stampa su Bambu Lab A1 mini (180×180 mm) | Stampante dell'utente: limita il piatto di stampa |
 | 2026-10-09 | Scheda: ESP32-S3 SuperMini (già acquistata) | Già in possesso dell'utente; BLE 5 per HID tastiera, USB-C nativo, molto piccola (~22,5×18 mm) |
+| 2026-10-09 | Alimentazione a batteria 18650; la presa USB-C sul retro serve solo a ricaricarla | Scelta dell'utente: controller senza fili |
+| 2026-10-09 | Firmware: primo caricamento via cavo, poi aggiornamenti OTA via WiFi | La porta USB della scheda resta chiusa nella scatola |
+| 2026-10-09 | Scatola modulare: portaschede intercambiabile avvitato al fondo; il fondo ha un attacco fisso e generico | Se cambia l'elettronica si ristampa solo il portaschede; viti per evitare giochi |
