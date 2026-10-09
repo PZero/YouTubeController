@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="YTC Test">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>YTC Test tastiera</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Elemento che riceve il focus quando lo "riprendiamo" (non visibile) -->
+  <div id="focusSink" tabindex="-1" aria-label="Pagina"></div>
+
+  <header>
+    <h1>YouTubeController - pagina di prova (fase 0)</h1>
+    <div id="mode" class="pill">modalita: ?</div>
+  </header>
+
+  <div id="focusBanner" class="banner ok">FOCUS: pagina (i tasti arrivano all'app)</div>
+
+  <main>
+    <section id="left">
+      <div class="row">
+        <label for="videoId">Video (ID o URL)</label>
+        <input id="videoId" type="text" value="M7lc1UVf-VE" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button id="loadBtn" type="button">Carica</button>
+      </div>
+
+      <div id="playerWrap">
+        <div id="player"></div>
+        <div id="overlay" hidden>overlay attivo: tocca = play/pausa</div>
+      </div>
+
+      <div class="row buttons">
+        <button id="refocusBtn" type="button" class="big">Riprendi focus</button>
+        <button id="playBtn" type="button">Play/Pausa</button>
+        <button id="backBtn" type="button">-5 s</button>
+        <button id="fwdBtn" type="button">+5 s</button>
+      </div>
+
+      <fieldset>
+        <legend>Strategie per non perdere il focus (confrontale)</legend>
+        <label><input type="checkbox" id="optOverlay"> A. Overlay trasparente sopra il player (intercetta i tocchi)</label>
+        <label><input type="checkbox" id="optNoPointer"> B. pointer-events: none sull'iframe</label>
+        <label><input type="checkbox" id="optAutoRefocus"> C. Recupero automatico del focus (su blur e ogni 0,5 s)</label>
+        <label><input type="checkbox" id="optNoControls"> D. Player senza controlli YouTube (controls=0) - si applica a "Carica"</label>
+        <label><input type="checkbox" id="optDisableKb" checked> E. Tastiera del player disattivata (disablekb=1) - si applica a "Carica"</label>
+        <label><input type="checkbox" id="optSilentAudio"> F. Audio silenzioso in loop per attivare Media Session della pagina</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Tastiera a schermo</legend>
+        <input id="fakeSearch" type="search" placeholder="Ricerca finta: tocca qui e scrivi" autocomplete="off">
+        <p class="hint">Con la tastiera Bluetooth collegata iPadOS di solito nasconde la tastiera a schermo e mostra solo una barretta in basso.
+          Per farla comparire: tieni premuto il tasto <b>globo</b> (o Fn) sulla tastiera fisica, oppure tocca la <b>freccia giu</b> / icona tastiera sulla barretta.
+          I tasti premuti mentre scrivi qui vengono registrati ma NON comandano il video.</p>
+      </fieldset>
+
+      <details id="checklist" open>
+        <summary>Checklist di test (annota i risultati)</summary>
+        <ol>
+          <li>Annota modello iPad e versione iPadOS; prova sia in Safari sia installata nella Home (indicatore "modalita" in alto).</li>
+          <li>Abbina il controller (Impostazioni &rarr; Bluetooth). Senza controller usa una normale tastiera Bluetooth.</li>
+          <li>Ruota la manopola lenta e veloce: quali <i>key/code</i> arrivano? Arrivano tutti gli scatti? Guarda la colonna &Delta;ms e "repeat".</li>
+          <li>Premi il pulsante breve: arriva keydown + keyup? Il video va in play/pausa?</li>
+          <li>Tasti media (consumer control): compaiono come <i>keydown</i> (MediaPlayPause...) o come riga <b>MEDIA</b>, o non arrivano affatto?</li>
+          <li>Tocca il video (tutte le strategie spente): il banner diventa rosso? I tasti funzionano ancora? "Riprendi focus" li ripristina?</li>
+          <li>Ripeti il punto 6 con le strategie A, B, C, D (una alla volta) e annota quale tiene il focus.</li>
+          <li>Il primo play parte dalla manopola/pulsante o serve un tocco sullo schermo (limite autoplay)? Audio attivo o muto?</li>
+          <li>Tocca la ricerca finta: compare la tastiera a schermo? Si riesce a farla comparire col tasto globo / freccia giu?</li>
+          <li>Blocca e sblocca l'iPad, cambia app e torna: il controller resta collegato? I tasti arrivano ancora senza toccare nulla?</li>
+          <li>Lascia fermo il controller qualche minuto (standby firmware) e riprendi: quanto tempo per riconnettersi?</li>
+          <li>Usa "Copia registro" e incolla il risultato nelle note del test.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="right">
+      <div class="row">
+        <h2>Registro eventi</h2>
+        <button id="clearBtn" type="button">Svuota</button>
+        <button id="copyBtn" type="button">Copia registro</button>
+      </div>
+      <div id="status" class="status">player: in caricamento...</div>
+      <ol id="log" aria-live="polite"></ol>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
