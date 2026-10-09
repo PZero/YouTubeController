@@ -1,0 +1,22 @@
+# Segreti (es. chiave API YouTube)
+.env
+.env.*
+*.key
+
+# Impostazioni locali di Claude Code
+.claude/settings.local.json
+
+# Dipendenze e build
+node_modules/
+dist/
+.pio/
+build/
+
+# File 3D generati
+*.stl
+*.3mf
+*.gcode
+
+# Sistema
+Thumbs.db
+.DS_Store
