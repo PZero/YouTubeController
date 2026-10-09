@@ -140,3 +140,18 @@ Impatto su `enclosure/youtube_control.scad` (da aggiornare a cura di `design-3d`
 - Nuovo montaggio: foro Ø 7,2 nella parete da 3 (spessore compatibile), dado all'interno; opzionale incasso esagonale dal lato interno o rondella antirotazione.
 - Estetica: si può mantenere un cappuccio stampato (Ø ~16) che calza sul tasto blu a pressione; attenzione che il cappuccio non tocchi il dado/la parete nella corsa (~1 mm) e che resti guidato.
 - Spazio interno: con piano a z0 = 43, tilt 10° e tasto a s = -33, la faccia interna sta a circa 34 mm dal fondo esterno, ~31 dal fondo interno: il pulsante (~15-20 sotto la parete) ci sta, ma va evitata la sovrapposizione con la 18650 (Ø 18,5) e con il portaschede in quella zona.
+
+## Interfacce fisse scocca / fondo / portaschede
+
+Quote nel sistema della scocca (`youtube_control.scad`): X larghezza (centro scocca = 0), Y lunghezza (+Y = retro, centro = 0), Z dalla faccia esterna del fondo. Cambiarle richiede di ristampare più pezzi: il portaschede si adatta a queste quote, non il contrario.
+
+| Interfaccia | Valore | Pezzi coinvolti |
+|-------------|--------|-----------------|
+| Presa USB-C di ricarica sul retro | apertura 13 x 7 (r 3), centro X = **-12** (prima +14), Z = 14 | scocca, TP4056 sul portaschede |
+| Viti fondo → scocca | 4x M3x8 svasate autofilettanti, centri (±26,68; ±44,18) | fondo, scocca |
+| Viti fondo → portaschede | 4x M3x8 svasate autofilettanti dal basso, centri (-27; -35), (27; -35), (-12; 43), (12; 43); torrette Ø7 con foro pilota 2,6 | fondo, portaschede |
+| Foro spillo RST | Ø1,8 con imbocco svasato Ø4, centro (-16,55; -9,4) | fondo, portaschede (tubetto guida), SuperMini |
+| Foro spillo BOOT (facoltativo) | Ø1,8, centro (-7,55; -9,4) | come sopra |
+| Spessore fondo / piastra portaschede | 3,0 / 2,8 (piastra da Z = 3 a 5,8) | fondo, portaschede |
+
+Motivo dello spostamento della presa USB (da X = +14 a X = -12): il portabatteria 18650 occupa il lato +X per quasi tutta la lunghezza (unico spazio libero dal corpo del pulsante, che sta a X = -10 davanti); il TP4056 va quindi sul lato -X dietro la SuperMini. A X = 14 il modulo (17,3 di larghezza) avrebbe toccato la torretta angolare; a -12 restano 1,8 mm.
