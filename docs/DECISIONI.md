@@ -16,3 +16,8 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-09 | Scatola modulare: portaschede intercambiabile avvitato al fondo; il fondo ha un attacco fisso e generico | Se cambia l'elettronica si ristampa solo il portaschede; viti per evitare giochi |
 | 2026-10-09 | Portaschede fissato al fondo con viti autofilettanti | Scelta dell'utente: semplicità, coerente con le viti del fondo |
 | 2026-10-09 | Niente boost: uscita OUT del TP4056 direttamente sul pin 5V della SuperMini | L'LDO di bordo regge 3,4-4,2 V; il boost consumerebbe a vuoto e rischierebbe sovratensioni |
+| 2026-10-09 | Eliminata la ricarica Qi | Si ricarica dalla USB-C del TP4056; fondo più semplice, niente disturbi all'antenna |
+| 2026-10-09 | Un solo pulsante (PBS-110): pressione breve = play/pausa, pressione lunga 10 s = standby / risveglio; push dell'encoder non usato | Interfaccia minima, niente interruttore di accensione |
+| 2026-10-09 | Foro per spillo sul fondo in corrispondenza del tasto RST della SuperMini | Reset senza aprire la scatola (la batteria resta sempre collegata) |
+| 2026-10-09 | Portabatteria 18650 stampato nel portaschede | L'utente non ha un portabatteria; resta tutto nel modulo intercambiabile |
+| 2026-10-09 | Stampa su più piatti (anche per colori diversi) | Il layout unico non entra nella A1 mini |
