@@ -14,3 +14,4 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-09 | Alimentazione a batteria 18650; la presa USB-C sul retro serve solo a ricaricarla | Scelta dell'utente: controller senza fili |
 | 2026-10-09 | Firmware: primo caricamento via cavo, poi aggiornamenti OTA via WiFi | La porta USB della scheda resta chiusa nella scatola |
 | 2026-10-09 | Scatola modulare: portaschede intercambiabile avvitato al fondo; il fondo ha un attacco fisso e generico | Se cambia l'elettronica si ristampa solo il portaschede; viti per evitare giochi |
+| 2026-10-09 | Portaschede fissato al fondo con viti autofilettanti | Scelta dell'utente: semplicità, coerente con le viti del fondo |
