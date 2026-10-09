@@ -8,7 +8,7 @@ Chip ESP32-S3FH4R2 (4 MB flash, 2 MB PSRAM quad). Acquistata (3 pezzi), in arriv
 
 ### Pinout
 
-Pin sugli header laterali (2 file, passo 2,54 mm; le fonti indicano 18 pin = 2 x 9, l'utente dalla foto conta 2 x 8: **verificare la serigrafia**):
+Pin sugli header laterali (2 file da 9, passo 2,54 mm, confermato dal disegno Nologo):
 
 | Pin | Funzione | Note |
 |-----|----------|------|
@@ -68,7 +68,7 @@ Proposta per il prototipo: HijelHID_BLEKeyboard; ripiego: T-vK con core 2.0.17. 
 ### Fonti
 
 - https://espboards.dev/boards/esp32-s3-supermini (pinout, LED, batteria, deep sleep, problemi antenna)
-- https://www.otronic.nl/en/esp32-s3-super-mini-4mb-flash-en-2mb-psram.html (dimensioni 22,52 x 18, GPIO sicuri)
+- https://www.otronic.nl/en/esp32-s3-super-mini-4mb-flash-en-2mb-psram.html (GPIO sicuri; la lunghezza 22,52 indicata è errata, vale 23,50 da disegno Nologo)
 - https://www.tinytronics.nl/en/development-boards/microcontroller-boards/with-wi-fi/esp32-s3-supermini-development-board-with-soldered-headers (24 x 18 mm, TP4054, GPIO 1-13/43/44 sugli header)
 - https://devices.esphome.io/devices/TENSTAR-ROBOT-ESP32-S3-SuperMini/ (WS2812 su GPIO48, PSRAM quad)
 - https://esp32.com/viewtopic.php?p=149991 (diodo del circuito batteria)
