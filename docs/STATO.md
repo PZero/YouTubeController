@@ -8,7 +8,7 @@ _Ultimo aggiornamento: 2026-10-09_
 ## Fatto
 - Utente: esperienza discreta; stampante Bambu Lab A1 mini; CAD OpenSCAD (scritto in `CLAUDE.md`).
 - Script scatola dell'utente salvato in `enclosure/youtube_control.scad` (compila; layout di stampa 184×189 mm, **non entra** nel piatto 180×180).
-- Repository git inizializzato (autore locale fnicora).
+- Repository git su GitHub (PZero/YouTubeController, pubblico; autore con email noreply di GitHub).
 - Scheda ESP32-S3 SuperMini: quote dal disegno ufficiale Nologo (23,5×18 mm, 2×9 pin), pinout, GPIO proposti (encoder 4/5, push encoder 6, tasto 7), note firmware.
 - Alimentazione: 18650 → modulo TP4056 USB-C con protezione (B+/B-) → OUT+/OUT- sul pin 5V/GND della scheda. Boost MT3608 scartato.
 - Riconosciuti: encoder tipo EC11 con pulsante e **albero zigrinato**; pulsante da pannello tipo PBS-110 (M7, dado).
