@@ -1,38 +1,38 @@
 # Stato del progetto
 
-_Ultimo aggiornamento: 2026-10-09_
+_Ultimo aggiornamento: 2026-10-11_
 
 ## Fase attuale
-**Fase 0 → 3 in parallelo.** Componenti scelti (ESP32 in arrivo), alimentazione definita, prima versione completa della scatola modulare. App non ancora iniziata.
+**Fase 1 (prototipo firmware) in partenza; PWA completa (fase 2); scatola alla seconda versione (fase 3).** ESP32 arrivato.
 
 ## Fatto
-- Utente: esperienza discreta, Bambu Lab A1 mini, OpenSCAD.
-- Repository pubblico su GitHub: PZero/YouTubeController (email noreply, nessuna credenziale).
-- Componenti documentati (datasheet, quote con fonte/affidabilità in `enclosure/dimensioni.md`, BOM): ESP32-S3 SuperMini, TP4056 USB-C con protezione, encoder EC11E zigrinato 18T, pulsante PBS-110, 18650. MT3608 scartato.
-- Schema collegamenti in `firmware/README.md`: 18650 → TP4056 B+/B- → OUT+/OUT- → 5V/GND; encoder A/B su GPIO4/5; pulsante su GPIO7; partitore 220k/220k su GPIO1.
-- Scatola (`enclosure/`): Qi tolto; pulsante PBS-110 con cappuccio; manopola con sede zigrinata + `test_ring`; **portaschede** (`portaschede.scad`) avvitato al fondo con ESP32 capovolta, fori spillo RST/BOOT, TP4056, culla 18650; presa USB-C ricarica a X=-12; scritte disattivate; 3 piatti di stampa entro 180×180; interferenze verificate = 0.
-- Render in `docs/render/` (montato, retro, esploso, sezione, piatti).
-- Pagina di prova tastiera/focus (`app/test/`) online su https://pzero.github.io/YouTubeController/test/ (GitHub Pages via Actions, pubblica solo `app/`).
-- Chiave API YouTube creata dall'utente (con restrizioni), conservata fuori dal repo; andrà inserita nelle impostazioni della PWA sull'iPad.
+- Fase 0: tastiera BLE su iPad validata (tasti sempre ricevuti, nessuna strategia di focus; la tastiera a schermo compare toccando un campo).
+- **PWA completa** online: https://pzero.github.io/YouTubeController/ — ricerca (chiave API sul dispositivo), preferiti con loop A-B, seek a 3 velocità con accumulo e un solo seekTo, loop A-B, schermo pieno automatico, sezione Controller, icona. Mappa tasti in `app/js/keymap.js`.
+- Decisi: tasti (←/→, Shift, Alt, Spazio, L), gesti (breve/media/10 s/2 s risveglio, pulsante+5 scatti avanti = OTA, indietro = reset WiFi), OTA via GitHub Release + WiFi di casa opzionale, R3 2,4 kΩ (0,5 A).
+- Nuovi componenti: **anello WS2812B 16 LED** attorno alla manopola (diffusore stampato a parte) e **modulo vibrazione**; interruttore anello S8550 + 2N3904 (kit); lettura carica CHRG/STDBY con resistenze. Schema in `firmware/README.md`.
+- **Millefori** 8×13 coricata sopra il TP4056: layout, piste e verifica automatica in `firmware/millefori/` (verifica OK).
+- Scatola: anello, diffusore, vibrazione, ganci rifatti per **PLA**, verifica interferenze = 0; esportazione per Bambu Studio/MakerWorld (`enclosure/export/esporta.py`, zip di prova consegnato).
+- Tenuto il TP4056 (cella Jesspow 3300 mAh **non protetta**, Ø18,5×65); caricabatterie della SuperMini non usato.
+- README del repository con foto (senza EXIF) e render; licenza MIT (MakerWorld: CC BY 4.0).
 
 ## Prossimi passi
-1. Test della pagina di prova sull'iPad (Safari e Home): l'utente incolla il registro ("Copia registro") + modello/versione iPadOS → scegliere i tasti del firmware e la strategia per il focus.
-2. All'arrivo dell'ESP32: misure col calibro (lista sotto), aggiornare i parametri, stampare `test_ring` e portaschede di prova (PETG).
-3. Prototipo su breadboard: firmware BLE HID (play/pausa, seek, pressione lunga 10 s = standby).
+1. **Prototipo su breadboard** (piano proposto, in attesa di ok): arduino-cli + core ESP32 3.x + libreria BLE keyboard; firmware v0 con encoder (3 velocità) e pulsante (breve/media); prova con la PWA sull'iPad e taratura soglie. Chiedere: breadboard/Dupont, fili su encoder e pulsante, ok a scaricare arduino-cli.
+2. Misure col calibro → **design-3d** sposta la millefori nel portaschede (colonnine sopra il TP4056, via le guide in piedi) e aggiorna lo zip completo.
+3. Stampa dello zip di prova (tolleranze PLA, scatto anello e diffusore).
 
 ## Problemi aperti
-- **Primo flash con la batteria scollegata** (niente diodo: pin 5V = VBUS → rischio sulla 18650). Da scrivere nelle istruzioni di montaggio.
-- **OTA**: piano proposto in `firmware/README.md` (sezione OTA); l'utente deve confermare il gesto (pulsante + 5 scatti) e la build su GitHub Actions/Release.
-- Antenna ESP32 vicina alla 18650 (involucro metallico): verificare la portata BLE col prototipo.
-- Misure col calibro: SuperMini (spessore PCB, sporgenza USB-C), TP4056 (PCB, fori, USB-C, LED), encoder (bussola, albero, zigrinatura), PBS-110 (filetto, dado, tasto), cella e contatti.
-- LED di carica visibili dal retro? Dipende dalla posizione reale sul TP4056 (eventuale light pipe).
-- Margini stretti: culla 18650 a 0,5 mm dai condotti laterali; incastri ESP32 piccoli.
-- Corrente di carica: valutare R3 2,4 kΩ (0,5 A) in scatola chiusa.
-- Da comprare: viti M3x8 ×8, M2x5 ×4, contatti 18650 (vedi BOM).
+- **Misure mancanti**: interasse fori TP4056 (serve alla millefori); lunghezza del solo PCB della SuperMini (27 totale con USB-C: la presa sporgerebbe ~3,5 invece di 1,2-2,2); spessore PCB anello e raggio dei LED; resistenze del kit (lunghezza/diametro); posizione del motore sul modulo vibrazione; misure già in lista (encoder, PBS-110, contatti cella).
+- `enclosure/dimensioni.md` descrive ancora la millefori **in piedi** (modello non aggiornato alla posizione sopra il TP4056).
+- Caricabatterie integrato della SuperMini (pad B+/B−) alimentato dal pin 5V: misurare il consumo in standby.
+- Tasti F13–F16 (avvisi alla PWA) da aggiungere a `keymap.js` e da verificare su iPadOS.
+- Da verificare sul prototipo: pinout S8550 col tester, anello spento al boot, dato anello a 4,2 V, pull-down/LED di alimentazione del modulo vibrazione, portata BLE vicino alla 18650, primo play da tasto.
+- TP4056 coperto dalla millefori: controllare la temperatura in carica (PLA ~55 °C).
+- Primo flash con la batteria scollegata.
+- Da comprare: viti M3x8 ×8, M2 (TP4056 + millefori), distanziali nylon M2, contatti 18650; verificare in casa millefori, Dupont 2×4, condensatori (2 elettrolitici 47–100 µF, 3 da 100 nF).
 
 ## Fasi previste
-0. Avvio e prototipo di validazione
+0. Avvio e prototipo di validazione (fatto)
 1. Firmware funzionante su breadboard
-2. PWA: ricerca e player controllato da tastiera
+2. PWA: ricerca e player controllato da tastiera (fatta, da provare col controller)
 3. Scatola 3D (scocca + portaschede modulare) e assemblaggio
-4. Rifiniture (decorazioni, scritte)
+4. Rifiniture e pubblicazione su MakerWorld

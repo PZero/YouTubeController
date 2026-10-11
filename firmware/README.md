@@ -390,7 +390,7 @@ Uso in firmware:
    GPIO6 ────────────────── IN ┘   (+ 100 kΩ IN→GND se il modulo non ha pull-down)
 ```
 
-Tutto ciò che non è la SuperMini o il modulo 4056 (transistor, resistenze, condensatori, connettore) sta su una **schedina millefori** sul portaschede (quote indicative in `enclosure/dimensioni.md`).
+Tutto ciò che non è la SuperMini o il modulo 4056 (transistor, resistenze, condensatori, connettore) sta su una **schedina millefori** sul portaschede (quote indicative in `enclosure/dimensioni.md`). Layout, piste, verifica automatica e ordine di saldatura: [`millefori/`](millefori/README.md).
 
 Connettore anello (sulla scocca) ↔ portaschede:
 

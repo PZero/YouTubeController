@@ -52,3 +52,7 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-11 | Tutti i pezzi in PLA (diffusore in PLA bianco) | Filamenti disponibili all'utente; ganci a scatto da dimensionare per PLA (deformazione ≤ ~1,5%) |
 | 2026-10-11 | Licenza MIT per tutto il progetto (codice, modello 3D, documentazione) | Scelta dell'utente: massimo riuso, con la sola citazione |
 | 2026-10-11 | Su MakerWorld il modello 3D si pubblica con licenza CC BY 4.0 (sul repository resta MIT) | Scelta dell'utente: licenza equivalente alla MIT tra quelle di MakerWorld (riuso libero, anche commerciale, con citazione) |
+| 2026-10-11 | Si tiene il TP4056 (con DW01A) e non si usa il caricabatterie integrato della SuperMini (pad B+/B− liberi) | Cella Jesspow non protetta: serve la protezione del modulo; carica integrata ~100 mA troppo lenta (>30 h); niente ridisegno del portaschede |
+| 2026-10-11 | Schedina millefori 8×13 fori coricata sopra il TP4056 (4 distanziali in nylon M2), componenti in piedi fino a 12 mm | Unica posizione con spazio sufficiente (in piedi 20×30 servivano ~101 fori su 77) |
+| 2026-10-11 | Connettore unico scocca↔portaschede: pin header 2×4 passo 2,54 + Dupont 2×4 con chiave | Coperchio staccabile con una sola presa; JST-PH (2,0 mm) non compatibile con la millefori |
+| 2026-10-11 | Interruttore anello con transistor del kit (S8550 PNP + 2N3904 NPN), lettura carica con 10k + 100k (niente BAT43) | Componenti già in possesso: nessun acquisto di SMD |

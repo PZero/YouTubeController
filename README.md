@@ -8,7 +8,7 @@ Controller fisico per YouTube su iPad: **una manopola e un pulsante** in una sca
 
 ![Controller montato](docs/render/render_montato.png)
 
-> Stato: in sviluppo. PWA utilizzabile; elettronica in attesa della scheda; scatola alla prima versione completa.
+> Stato: in sviluppo. PWA utilizzabile; ESP32 arrivato, prototipo del firmware in partenza; scatola alla seconda versione (anello LED, vibrazione, PLA).
 > Dettagli aggiornati in [`docs/STATO.md`](docs/STATO.md).
 
 ## Come funziona
@@ -77,6 +77,7 @@ Riferimento unico: [`app/js/keymap.js`](app/js/keymap.js).
 </p>
 
 Schema dei collegamenti, GPIO, consumi e piano OTA: [`firmware/README.md`](firmware/README.md).
+Schedina millefori di interfaccia (layout, piste, ordine di saldatura): [`firmware/millefori/`](firmware/millefori/README.md).
 Lista componenti con costi e alternative: [`docs/BOM.md`](docs/BOM.md).
 
 **Aggiornamenti del firmware:** primo caricamento via USB (con la batteria scollegata), poi via WiFi (OTA): il firmware è compilato da GitHub Actions e pubblicato nelle *Releases*; con il gesto di aggiornamento il controller lo scarica da solo. Nessuna password nel firmware: la rete del controller e il WiFi di casa si configurano sulla scheda.
