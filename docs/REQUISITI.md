@@ -3,7 +3,7 @@
 ## Controller
 - Una manopola (encoder rotativo) e un pulsante.
 - Collegamento Bluetooth all'iPad.
-- Manopola: avanti / indietro nel video. Passo di avanzamento: da definire.
+- Manopola: avanti / indietro nel video, con passo che dipende dalla velocità di rotazione (3 livelli: fine / medio / veloce, secondi regolabili nella PWA; valori iniziali 1 / 5 / 30 s da tarare).
 - Pulsante: play / stop.
 - Alimentazione: da definire.
 

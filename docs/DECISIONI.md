@@ -28,3 +28,14 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-09 | Scartato il modulo di ricarica wireless "3IN1WPT_LICHARG" trovato dall'utente | Senza protezione evidente della cella, secondo caricatore da coordinare col TP4056, bobina vicina all'antenna: complessità non giustificata |
 | 2026-10-09 | Chiave API YouTube inserita dall'utente nelle impostazioni della PWA (salvata solo sul dispositivo) | Repository pubblico: nessuna chiave nel codice né nel sito pubblicato |
 | 2026-10-09 | Niente diodo su OUT+: la scheda va al PC solo per il primo flash, con la batteria scollegata; poi solo aggiornamenti OTA | Unica connessione USB prevista; evita la perdita di ~0,25 V di autonomia |
+| 2026-10-11 | Nessuna strategia speciale per il focus nella PWA; codici dei tasti ancora da definire | Prova su iPad con tastiera BLE: tasti sempre ricevuti con ogni strategia; tocco su campo di testo offre la tastiera a schermo |
+| 2026-10-11 | Avanzamento a velocità variabile: il firmware misura la velocità della manopola e invia un codice diverso per livello (lento/medio/veloce); la PWA assegna i secondi a ogni livello (regolabili) e invia un solo seekTo a fine rotazione | Misura precisa sulla scheda (il BLE raggruppa gli eventi); regolazione dei passi senza riflashare; niente buffering continuo |
+| 2026-10-11 | Loop A-B comandato dal controller con pressione media del pulsante (0,7-2 s): 1ª = A, 2ª = B e avvio, 3ª = cancella | Distinta da pressione breve, lunga e gesto OTA; il doppio clic ritarderebbe ogni play/pausa |
+| 2026-10-11 | I preferiti salvano anche i punti del loop A-B | Riprendere subito il passaggio da ripetere |
+| 2026-10-11 | Player senza controlli YouTube (controls=0, fs=0); schermo pieno gestito dalla PWA sul contenitore del player | Lo schermo pieno nativo di iPadOS sottrae i tasti alla PWA |
+| 2026-10-11 | Schermo pieno automatico al play e ridotto in pausa, più tasto nella PWA e tocco | Nessun gesto in più sul controller |
+| 2026-10-11 | Codici tasti: ←/→ fine, Shift+←/→ medio, Alt+←/→ veloce, Spazio play/pausa, L loop A-B | Provabili subito con una tastiera BLE qualsiasi; ignorati mentre si scrive |
+| 2026-10-11 | PWA in JavaScript semplice senza build, interfaccia minimale | Pubblicazione diretta su GitHub Pages, manutenzione semplice |
+| 2026-10-11 | Schermo pieno su iPadOS solo via CSS (contenitore fisso a tutta finestra), niente Fullscreen API | Evita rifiuti da evento tastiera e perdita dei tasti; nell'app installata nella Home è a tutto schermo |
+| 2026-10-11 | Loop A-B: riporta ad A solo se B viene superato partendo da dentro l'intervallo; un preferito con loop riparte da A | Un seek manuale fuori dal loop non viene "risucchiato" |
+| 2026-10-11 | Icona generata da `app/icons/make_icons.py` (solo libreria standard Python) | Nessuna dipendenza da installare; SVG e PNG dalla stessa geometria |

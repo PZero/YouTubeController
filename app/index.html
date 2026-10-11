@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="YT Controller">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="stylesheet" href="css/style.css">
+  <title>YouTubeController</title>
+</head>
+<body>
+  <!-- Riceve il focus quando lo "riportiamo" ai comandi (dopo campi di testo o dialog) -->
+  <div id="focusSink" tabindex="-1" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <form id="searchForm" class="search" role="search" autocomplete="off">
+      <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <input id="searchInput" type="search" enterkeyhint="search" placeholder="Cerca su YouTube o incolla un link / ID"
+             aria-label="Cerca video o incolla link YouTube" autocapitalize="off" autocorrect="off" spellcheck="false">
+    </form>
+    <button id="btnSettings" class="icon-btn" type="button" aria-label="Impostazioni" title="Impostazioni">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+
+  <main class="layout">
+    <section class="player-col" aria-label="Player">
+      <!-- #stage e' il contenitore che va a schermo pieno (pseudo-fullscreen CSS) -->
+      <div id="stage" class="stage">
+        <div class="video-box">
+          <div id="player"></div>
+          <div id="emptyHint" class="empty-hint">Cerca un video o incolla un link YouTube</div>
+          <!-- Overlay trasparente: intercetta i tocchi al posto dell'iframe (tocco = schermo pieno on/off) -->
+          <div id="tapOverlay" class="tap-overlay" role="button" aria-label="Schermo pieno on/off"></div>
+          <div id="playInvite" class="play-invite" hidden>Tocca il video per avviare</div>
+          <div id="seekIndicator" class="seek-indicator" aria-live="polite" hidden></div>
+          <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+        </div>
+        <div id="progress" class="progress" aria-label="Avanzamento: tocca per saltare">
+          <div class="progress-track" id="progressTrack">
+            <div class="progress-loop" id="progLoop" hidden></div>
+            <div class="progress-fill" id="progFill"></div>
+            <div class="progress-mark mark-a" id="markA" hidden>A</div>
+            <div class="progress-mark mark-b" id="markB" hidden>B</div>
+            <div class="progress-target" id="progTarget" hidden></div>
+          </div>
+          <div class="progress-time"><span id="timeCur">0:00</span> / <span id="timeDur">0:00</span></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="btnPlay" class="icon-btn" type="button" aria-label="Play / pausa" title="Play / pausa (Spazio)">
+          <svg class="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z" class="fill"/></svg>
+          <svg class="ico-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" class="fill"/></svg>
+        </button>
+        <button id="btnLoop" class="icon-btn text-btn" type="button" aria-label="Loop A-B" title="Loop A-B (L)">A–B</button>
+        <div class="now-playing">
+          <div id="npTitle" class="np-title">Nessun video</div>
+          <div id="npChannel" class="np-channel"></div>
+        </div>
+        <button id="btnFav" class="icon-btn" type="button" aria-label="Aggiungi ai preferiti" aria-pressed="false" title="Preferito">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></svg>
+        </button>
+        <button id="btnFull" class="icon-btn" type="button" aria-label="Schermo pieno" title="Schermo pieno">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="list-col" aria-label="Elenchi">
+      <div class="tabs" role="tablist">
+        <button id="tabResults" class="tab" role="tab" type="button" aria-selected="true" aria-controls="listResults">Risultati</button>
+        <button id="tabFavs" class="tab" role="tab" type="button" aria-selected="false" aria-controls="listFavs">Preferiti <span id="favCount" class="count"></span></button>
+      </div>
+      <div id="listStatus" class="list-status" role="status"></div>
+      <ul id="listResults" class="video-list" role="tabpanel" aria-labelledby="tabResults"></ul>
+      <ul id="listFavs" class="video-list" role="tabpanel" aria-labelledby="tabFavs" hidden></ul>
+    </section>
+  </main>
+
+  <dialog id="settingsDlg" class="dialog" aria-labelledby="settingsTitle">
+    <form method="dialog" id="settingsForm">
+      <header class="dlg-head">
+        <h2 id="settingsTitle">Impostazioni</h2>
+        <button class="icon-btn" value="close" aria-label="Chiudi" title="Chiudi">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+
+      <fieldset>
+        <legend>YouTube Data API</legend>
+        <label for="setApiKey">Chiave API (resta solo su questo dispositivo)</label>
+        <div class="row">
+          <input id="setApiKey" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Incolla la chiave">
+          <button id="btnShowKey" type="button" class="btn" aria-pressed="false">Mostra</button>
+        </div>
+        <p class="hint">Serve solo per la ricerca. Ogni ricerca costa 100 unità su 10.000 al giorno (≈100 ricerche). Incollare un link o un ID non usa la quota.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Passi della manopola (secondi)</legend>
+        <div class="grid3">
+          <label>Fine<input id="setStepFine" type="number" min="0.1" step="0.1" inputmode="decimal"></label>
+          <label>Medio (Shift)<input id="setStepMed" type="number" min="0.1" step="0.1" inputmode="decimal"></label>
+          <label>Veloce (Alt)<input id="setStepFast" type="number" min="0.1" step="0.1" inputmode="decimal"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Schermo pieno</legend>
+        <label class="check"><input id="setAutoFs" type="checkbox"> Entra in play, esci in pausa</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Preferiti</legend>
+        <div class="row">
+          <button id="btnExport" type="button" class="btn">Esporta JSON</button>
+          <button id="btnImport" type="button" class="btn">Importa JSON</button>
+          <input id="importFile" type="file" accept="application/json,.json" hidden>
+        </div>
+        <p class="hint">I dati di Safari e quelli dell'app installata nella schermata Home sono separati: usa Esporta/Importa per spostarli.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Tasti (promemoria)</legend>
+        <table class="keymap" id="keymapTable"></table>
+      </fieldset>
+
+      <footer class="dlg-foot">
+        <span id="appVersion" class="hint"></span>
+        <button class="btn primary" value="done">Fatto</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
