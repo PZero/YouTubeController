@@ -2,6 +2,7 @@
 // La chiave API NON e' mai nel codice: la inserisce l'utente e resta in questo storage.
 import { $, loadJson, saveJson, refocus } from './util.js';
 import { KEYMAP } from './keymap.js';
+import { renderControllerInfo } from './controller-info.js';
 
 const KEY = 'ytc.settings.v1';
 const DEFAULTS = {
@@ -48,6 +49,7 @@ export function initSettingsDialog(opts) {
     $('setStepMed').value = settings.steps.medium;
     $('setStepFast').value = settings.steps.fast;
     $('setAutoFs').checked = settings.autoFullscreen;
+    renderControllerInfo($('controllerInfo'), settings.steps);
   }
 
   // Salvataggio immediato a ogni modifica (niente "Salva" da dimenticare).
@@ -60,6 +62,7 @@ export function initSettingsDialog(opts) {
     };
     settings.autoFullscreen = $('setAutoFs').checked;
     saveSettings();
+    renderControllerInfo($('controllerInfo'), settings.steps);
     opts.onChange && opts.onChange();
   }
   dlg.addEventListener('change', apply);

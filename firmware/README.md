@@ -31,7 +31,7 @@ LED: WS2812 RGB su **GPIO48**; il LED rosso è dato anch'esso su GPIO48 da alcun
 |---------|------|--------------|
 | Encoder A (CLK) | 4 | contatto a GND, `INPUT_PULLUP` (+ eventuale 10 kΩ esterno e 100 nF per antirimbalzo) |
 | Encoder B (DT) | 5 | come sopra; comune dell'encoder a GND |
-| Pulsante dell'encoder (SW) | 6 | a GND, `INPUT_PULLUP` |
+| Pulsante dell'encoder (SW) | (6) | **non usato** (decisione 2026-10-11): non collegarlo; GPIO6 resta libero/riserva |
 | Switch play 6x6 | 7 | a GND, `INPUT_PULLUP` |
 | LED di stato | 48 | WS2812 integrato |
 | Tensione batteria | 1 | partitore 220k/220k da OUT+ del modulo 4056 (vedi Alimentazione) |
@@ -63,14 +63,95 @@ Encoder EC11E con pulsante integrato (albero zigrinato) e pulsante da pannello P
 | Encoder | A | GPIO4 |
 | Encoder | C (centrale) | GND |
 | Encoder | B | GPIO5 |
-| Encoder, switch integrato | S1 / S2 | GPIO6 / GND |
+| Encoder, switch integrato | S1 / S2 | non collegati (push dell'encoder non usato) |
 | Pulsante PBS-110 | terminale 1 / 2 | GPIO7 / GND (non polarizzato) |
 
 - Pull-up: `INPUT_PULLUP` interni (~45 kΩ) bastano per il prototipo; con fili lunghi o rimbalzi evidenti aggiungere 10 kΩ verso 3V3 su A e B e 10 nF-100 nF verso GND (filtro RC, costante ~0,1-1 ms).
 - Quadratura: leggere A e B con interrupt su entrambi i fronti (o polling a 1 kHz) e una macchina a stati a tabella (16 transizioni, quelle non valide scartate). Contare un passo solo a stato di riposo (scatto) raggiunto: con 30 scatti/15 impulsi lo scatto cade su A=B (00 e 11), con 20/20 su 11; verificare a mano quanti scatti/giro ha il nostro. Libreria pronta in alternativa: `ESP32Encoder` (contatore hardware PCNT, filtro glitch integrato).
 - Debounce pulsanti: software 20-30 ms (stato stabile per N ms prima di emettere il tasto); un tasto per pressione, nessuna ripetizione.
-- Mappatura: rotazione = freccia sinistra/destra; PBS-110 = spazio; switch dell'encoder = libero per una seconda funzione (es. play/pausa alternativo, o pressione lunga = altro comando), da decidere in `docs/DECISIONI.md`.
-- Deep sleep: GPIO4-7 sono RTC, risveglio `ext1` con livello basso su GPIO6/7 (pressione) ed eventualmente su A/B.
+- Deep sleep: GPIO4-7 sono RTC, risveglio `ext1` con livello basso su GPIO7 (pulsante PBS-110). A/B non usati come sorgente di risveglio (la manopola non deve accendere il controller in borsa).
+
+### Mappa tasti (decisione 2026-10-11)
+
+Riferimento autoritativo: `app/js/keymap.js`. Se cambia lì, va cambiato qui e nel firmware.
+
+| Gesto | Tasto inviato | Report HID (modificatore / usage) |
+|-------|---------------|------------------------------------|
+| Rotazione lenta, indietro / avanti | ← / → | 0x00 / 0x50 / 0x4F |
+| Rotazione media | Shift + ← / → | Left Shift (0x02) / 0x50 / 0x4F |
+| Rotazione veloce | Alt + ← / → | Left Alt (0x04) / 0x50 / 0x4F |
+| Pulsante, pressione breve | Spazio | 0x00 / 0x2C |
+| Pulsante, pressione media | L (minuscola) | 0x00 / 0x0F |
+
+- Ogni tasto = **un report di pressione con modificatore e tasto insieme**, seguito subito dal report di rilascio (tutto a zero). Non inviare il modificatore in un report separato, e non lasciare mai un tasto "premuto": se il rilascio tarda oltre ~500 ms iPadOS avvia la ripetizione automatica.
+- Nessun Ctrl/Cmd (la PWA li ignora). F (schermo pieno) ed Esc non sono inviati dal controller.
+
+#### Velocità della manopola: 3 livelli
+
+Il firmware misura la velocità e sceglie il livello; la PWA somma gli eventi e fa un solo seek a fine rotazione.
+
+- Misura: intervallo tra scatti consecutivi, velocità = media mobile degli ultimi 3 intervalli (finestra ~100-300 ms a seconda della velocità). Il primo scatto dopo una pausa > 300 ms è sempre "lento".
+- Soglie iniziali (da tarare sul prototipo; dipendono dagli scatti/giro, 20 o 30):
+
+| Livello | Velocità | Indicativamente (encoder 20 scatti/giro) |
+|---------|----------|------------------------------------------|
+| lento | < 5 scatti/s | meno di 1/4 di giro al secondo |
+| medio | 5-12 scatti/s | |
+| veloce | > 12 scatti/s | oltre ~0,6 giri/s |
+
+- Isteresi: si sale di livello subito appena la media supera la soglia; si scende solo se la media resta sotto (soglia - 20%) per 2 scatti consecutivi. Evita l'alternanza di livelli a velocità di confine.
+- Cambio di verso: azzera la media (ricomincia da "lento").
+- Soglie e isteresi come costanti in testa al codice; in seguito eventualmente regolabili dalla pagina web dell'AP (NVS).
+
+#### Un evento per scatto o raggruppare?
+
+- Limite pratico: iPadOS usa per le periferiche HID un intervallo di connessione di ~15 ms (11,25-30 ms). Per ogni evento di connessione si possono inviare più notifiche, ma con libreria Arduino e coesistenza radio è prudente contare su ~1 notifica utile per evento. Ogni tasto = 2 report (pressione + rilascio) → circa **30 tasti/s** sostenibili in modo affidabile.
+- Rotazione veloce realistica: 1-3 giri/s = 20-90 scatti/s → oltre il limite.
+- Il raggruppamento vero (un solo tasto che "vale" N scatti) non è possibile con tasti semplici: la PWA conta i tasti.
+- **Proposta**: un tasto per scatto, ma con **coda in firmware** e cadenza minima di invio (~33 ms per tasto, da tarare). Gli scatti in eccesso restano in coda, non si perdono; a fine rotazione la coda si svuota in poche centinaia di ms. Regole della coda:
+  - capienza massima ~40 scatti; oltre si saturano (a velocità alta il passo è già grosso, la perdita è accettabile);
+  - un cambio di verso cancella prima gli scatti in coda del verso opposto (risposta immediata all'inversione);
+  - ogni voce in coda conserva il proprio livello.
+- Alternativa da valutare se la coda risulta lenta: al livello veloce inviare 1 tasto ogni 2 scatti e far valere doppio il passo veloce nella PWA (richiede una modifica coordinata con l'app).
+- **Impatto app**: il timeout di "fine rotazione" della PWA deve essere più lungo della cadenza della coda (≥ 150-200 ms), altrimenti un'unica rotazione veloce produce più seek.
+
+### Gesti del pulsante (PBS-110, tabella unica)
+
+Push dell'encoder **non usato**. Durate misurate dalla pressione stabile (dopo il debounce).
+
+| Priorità | Gesto | Condizione | Azione | Quando scatta |
+|----------|-------|------------|--------|---------------|
+| 1 | Premuto + 5 scatti AVANTI | pulsante tenuto, 5 scatti consecutivi in avanti | modalità aggiornamento (vedi OTA) | al 5° scatto, senza aspettare il rilascio |
+| 1 | Premuto + 5 scatti INDIETRO | pulsante tenuto, 5 scatti consecutivi indietro | azzera il WiFi di casa (NVS) e apre la rete di configurazione | al 5° scatto |
+| 2 | Lunga | tenuto ≥ 10 s, nessuna rotazione | standby (deep sleep) / risveglio | a 10 s, ancora premuto; il rilascio successivo viene ignorato |
+| 3 | Media | rilascio tra 0,7 e 2 s, nessuna rotazione | tasto L (loop A-B) | al rilascio |
+| 4 | Breve | rilascio prima di 0,7 s, nessuna rotazione | Spazio (play/pausa) | al rilascio |
+| - | Zona morta | rilascio tra 2 e 10 s, nessuna rotazione | nulla (annullamento volontario) | - |
+
+Regole per evitare sovrapposizioni:
+- Le finestre di durata sono disgiunte: < 0,7 / 0,7-2 / 2-10 (nulla) / ≥ 10 s.
+- **Qualsiasi scatto** con il pulsante premuto annulla breve, media e lunga per quella pressione, e gli scatti **non** vengono inviati come frecce.
+- Il conteggio dei 5 scatti si azzera se cambia verso; meno di 5 scatti e poi rilascio = nulla.
+- Dopo un gesto con rotazione, nessun altro gesto fino al rilascio.
+- Risveglio da standby: la pressione risveglia il chip (`ext1` su GPIO7); il firmware verifica che il pulsante resti premuto fino a 10 s complessivi, altrimenti torna in deep sleep (evita accensioni accidentali). Da valutare sul prototipo se basta una pressione più corta (es. 2 s): il boot dell'S3 richiede ~0,3-0,5 s.
+- Spazio parte al rilascio: è inevitabile un ritardo pari alla durata della pressione (tipicamente 100-200 ms), il prezzo per distinguere breve e media.
+
+#### Come capisce l'utente che il gesto è riuscito
+
+Il LED WS2812 è interno e non visibile; la PWA riceve solo i tasti.
+
+| Gesto | Riscontro senza modifiche |
+|-------|---------------------------|
+| Breve / media | effetto immediato nella PWA (play/pausa, punto A/B del loop) |
+| Aggiornamento | compare la rete `YTController-OTA` (se manca il WiFi di casa); con WiFi di casa: il controller sparisce dai dispositivi Bluetooth dell'iPad e ricompare dopo il riavvio |
+| Azzeramento WiFi | compare la rete `YTController-OTA` |
+| Standby | nessuno diretto: il controller non risponde più e risulta scollegato nelle impostazioni Bluetooth |
+
+Proposte da valutare (non decise):
+- **A. Tasto "innocuo" prima del gesto**: il firmware invia un tasto che nessuna app usa (es. F13-F15, usage 0x68-0x6A) subito prima di spegnere il BLE; la PWA lo intercetta e mostra un avviso ("Controller: aggiornamento in corso", "standby"). Pro: riscontro chiaro nella PWA. Contro: va verificato che iPadOS consegni F13+ a Safari come `KeyboardEvent` (prova con la pagina di prova); serve una voce in `app/js/keymap.js`; non funziona se la PWA non è aperta. Costo 0 €.
+- **B. Servizio batteria BLE (Battery Service 0x180F)**: iPadOS mostra il livello del controller nel widget Batterie; non dà riscontro sui gesti ma sì sullo stato di connessione e sulla carica. Utile comunque.
+- **C. LED visibile tramite light pipe** nella scocca (impatto scatola): riscontro diretto anche senza iPad. Costo ~0 € (stampa) ma richiede di posizionare il WS2812 vicino a una parete.
+- **D. Vibrazione** (micromotore + transistor): riscontro tattile; contro: consumo, spazio, componente in più (~1-2 €).
 
 ### Alimentazione
 
@@ -106,8 +187,8 @@ Valori elettrici (datasheet; i cloni possono differire):
 | Parametro | Valore | Note |
 |-----------|--------|------|
 | Tensione fine carica TP4056 | 4,20 V ±1% | CC/CV |
-| Corrente di carica | I = 1200 / R3 (A con R in Ω): 1,2 kΩ = 1 A, 2 kΩ = 0,58 A, 2,4 kΩ = 0,5 A, 3 kΩ = 0,4 A | verificare la marcatura di R3 ("122" = 1,2 kΩ). In una scatola chiusa conviene 0,5 A (R3 → 2,4 kΩ): meno calore (1 A dissipa fino a ~1,3 W) |
-| Fine carica / ricarica automatica | a C/10 (100 mA con 1 A) / riparte sotto ~4,05 V | |
+| Corrente di carica | I = 1200 / R3 (A con R in Ω): 1,2 kΩ = 1 A, 2 kΩ = 0,58 A, 2,4 kΩ = 0,5 A, 3 kΩ = 0,4 A | **Scelta (2026-10-11): R3 originale (1,2 kΩ, "122") sostituita con 2,4 kΩ → 0,5 A**. Meno calore in scatola chiusa (a 1 A fino a ~1,3 W). Carica completa di una 18650 da 2500-3000 mAh in ~5-6,5 h. Verificare con il tester la corrente reale (cloni) |
+| Fine carica / ricarica automatica | a C/10 (**50 mA con 0,5 A**) / riparte sotto ~4,05 V | |
 | Precarica cella molto scarica | sotto 2,9 V a C/10 | |
 | Limitazione termica TP4056 | 120 °C (riduce la corrente) | |
 | DW01A sovraccarica | ~4,30 V (4,25-4,35), rilascio ~4,10 V | |
@@ -116,8 +197,10 @@ Valori elettrici (datasheet; i cloni possono differire):
 | Assorbimento a riposo dalla cella | TP4056 ~2,5 µA (max 6) + DW01A ~3 µA → ~5-10 µA; i LED sono alimentati dall'USB e a riposo sono spenti | da misurare: un utente ha misurato 1,6 mA su una copia del modulo |
 
 Carica con carico collegato (nessun load sharing):
-- Il TP4056 vede la somma cella + ESP32. Con il nostro carico (20-50 mA) la fine carica a 100 mA arriva lo stesso, ma la cella si ferma un po' prima del pieno; a carica finita l'ESP32 scarica la cella fino a 4,05 V e la carica riparte (micro-cicli, accettabili).
-- Se si scegliesse R3 per correnti basse (es. 130 mA con 10 kΩ) la fine carica potrebbe non arrivare mai: non scendere sotto ~400 mA.
+- Il TP4056 vede la somma cella + ESP32. **Con 0,5 A la soglia di fine carica è 50 mA, cioè dello stesso ordine del carico con BLE connesso (20-50 mA)**: se il controller resta acceso e collegato durante la carica, la fine carica può non arrivare mai (cella tenuta a 4,2 V in tensione costante: non pericoloso, ma stressa la cella e il LED "carico" non si accende). In standby (deep sleep, < 0,1 mA) il problema non c'è.
+  - Mitigazioni da valutare: (a) consiglio d'uso "caricare in standby"; (b) ridurre il consumo da connesso (light sleep, CPU 80 MHz, intervallo di connessione più lungo quando inattivo) sotto ~20 mA; (c) leggere il pin CHRG del TP4056 (open-drain, attivo basso in carica) su un GPIO libero (es. GPIO8, con pull-up interno) per sapere quando è in carica e andare in standby dopo qualche minuto di inattività. Va saldato un filo sul pin 7 del TP4056 o sul lato LED del modulo.
+- A carica finita l'ESP32 scarica la cella fino a 4,05 V e la carica riparte (micro-cicli, accettabili).
+- Non scendere sotto 0,5 A (R3 oltre 2,4 kΩ): la fine carica diventerebbe ancora più incerta.
 - Durante la carica il controller resta utilizzabile.
 
 Soglie di tensione della batteria (cella collegata a OUT+, regolatore ME6217C33 con dropout ~0,1 V a 100 mA, più alto sui picchi radio di 200-300 mA; ESP32-S3 alimentato a 3,0-3,6 V, brown-out di default ~2,7 V):
@@ -164,12 +247,53 @@ Autonomia stimata (18650 2500-3000 mAh, ~2000-2400 mAh utili fino a 3,4-3,5 V):
 - Pulsante PBS-110: https://ifuturetech.org/?p=59198
 - MT3608, consumo a vuoto: https://hackaday.com/tag/mt3608/
 
-## OTA — proposta (da confermare con l'utente, 2026-10-09)
+## OTA e WiFi — CONFERMATA (2026-10-11)
 La scheda va al PC una sola volta (primo flash, **batteria scollegata**); poi solo OTA.
-1. **Partizioni**: due slot app OTA (es. "Minimal SPIFFS 1.9MB APP with OTA"), scelte al primo flash: cambiarle in seguito richiede il cavo. NVS preservata (abbinamento BLE con l'iPad).
-2. **Rollback**: nuova immagine "in prova", marcata valida solo dopo auto-test (BLE avviato, input ok); altrimenti ritorno automatico alla precedente.
-3. **Attivazione**: WiFi spento nell'uso normale; modalità OTA con gesto distinto dallo standby (proposta: pulsante premuto + 5 scatti di manopola); uscita automatica dopo 5 min.
-4. **Aggiornamento da iPad**: access point `YTController-OTA` (WPA2), pagina su 192.168.4.1 con versione, upload del .bin da File, avanzamento. Eventualmente anche ArduinoOTA/espota.
-5. **Build su GitHub Actions** → .bin nelle Release. **Nessun segreto nel binario**: password dell'AP salvata in NVS via seriale al primo flash.
-6. **Controlli**: rifiuto sotto ~3,7 V di batteria; verifica immagine (dimensione/checksum, opzionale firma); recupero estremo via USB + fori spillo BOOT/RST.
-Feedback: LED interno non visibile → l'indicazione è la comparsa della rete WiFi.
+1. **Partizioni**: due slot app OTA (es. "Minimal SPIFFS 1.9MB APP with OTA"), scelte al primo flash: cambiarle in seguito richiede il cavo. NVS preservata (abbinamento BLE, password AP, WiFi di casa). Verificare che il binario con BLE + WiFi + TLS stia sotto ~1,9 MB (stima 1,3-1,6 MB).
+2. **Rollback**: nuova immagine "in prova", marcata valida solo dopo auto-test (BLE avviato, input ok); altrimenti ritorno automatico alla precedente. Vale sia per l'upload manuale sia per lo scaricamento automatico.
+3. **Attivazione**: WiFi spento nell'uso normale; si entra con pulsante premuto + 5 scatti AVANTI (vedi gesti). All'ingresso il BLE viene fermato (iPad scollegato) per liberare memoria e radio; uscita con riavvio, automatica dopo 5 min senza attività.
+4. **Build su GitHub Actions** → Release di `PZero/YouTubeController` con asset a nome fisso: `firmware.bin` e `firmware.json` (versione, dimensione, SHA-256). **Nessun segreto nel binario**.
+5. **Password dell'AP** salvata in NVS via seriale al primo flash.
+6. **Controlli**: rifiuto sotto ~3,7 V di batteria; verifica immagine (dimensione, SHA-256 o MD5 con `Update.setMD5()`, opzionale firma); recupero estremo via USB + fori spillo BOOT/RST.
+
+### WiFi di casa (opzionale)
+- Configurato dalla pagina web dell'AP (elenco reti trovate + password). Credenziali **solo in NVS**, mai nel repository né nel binario.
+- Si cancella con il gesto premuto + 5 scatti INDIETRO, oppure con "Dimentica WiFi" dalla pagina; dopo l'azzeramento si apre la rete di configurazione.
+- Nota: la NVS non è cifrata (richiederebbe flash encryption, che complica OTA e recupero). Chi ha la scheda in mano può leggere la password di casa: rischio accettabile per un oggetto domestico, da dichiarare.
+
+### Flusso del gesto aggiornamento
+```
+gesto → batteria ≥ 3,7 V? ── no → (nessuna azione; eventuale tasto di avviso)
+           │ sì
+           ▼
+      ferma BLE → WiFi di casa configurato?
+           │ sì                                   │ no
+           ▼                                      │
+      connessione (timeout 20 s) ── fallita ──────┤
+           │ ok                                   │
+           ▼                                      ▼
+      GET firmware.json dell'ultima Release   AP `YTController-OTA` + pagina 192.168.4.1:
+      versione > attuale?                      versione, configura WiFi, carica .bin,
+        no → riavvio (niente da fare)          "Dimentica WiFi"; uscita dopo 5 min
+        sì → scarica firmware.bin in streaming
+             nello slot libero, verifica
+             dimensione + SHA-256
+             ok → riavvio sulla nuova immagine (in prova → rollback se l'auto-test fallisce)
+             errore/timeout → apre l'AP (fallback)
+```
+- URL stabili senza API: `https://github.com/PZero/YouTubeController/releases/latest/download/firmware.json` (e `.bin`). GitHub risponde con redirect 302 verso `release-assets.githubusercontent.com` / `objects.githubusercontent.com`: abilitare il follow dei redirect (`HTTPC_FORCE_FOLLOW_REDIRECTS` con `HTTPClient`/`HTTPUpdate`). In alternativa l'API `api.github.com/repos/.../releases/latest` (richiede header `User-Agent`, limite 60 richieste/h per IP, JSON più grande da analizzare).
+- TLS: `NetworkClientSecure` con **bundle di certificati radice** (`setCACertBundle`, bundle ESP-IDF "common" ~40-60 KB di flash) invece di un singolo certificato fissato: GitHub e la sua CDN cambiano catena nel tempo. Niente `setInsecure()`: l'integrità è comunque protetta dallo SHA-256, ma il bundle evita di scaricare file da un server falso.
+- Il repository deve restare **pubblico**: con un repository privato servirebbe un token, vietato nel binario.
+
+### Rischi dell'aggiornamento automatico
+| Rischio | Dettaglio | Mitigazione |
+|---------|-----------|-------------|
+| Memoria | sessione TLS mbedTLS ~40-50 KB di heap interna + WiFi ~50-70 KB; insieme a NimBLE può mancare memoria interna (la PSRAM non aiuta per tutti i buffer) | fermare e deinizializzare il BLE prima del WiFi (o riavviare in "modalità aggiornamento" tramite flag in RTC/NVS, la via più pulita); buffer TLS ridotti se serve |
+| TLS / data | senza ora corretta mbedTLS (default ESP-IDF) non controlla la scadenza dei certificati; se il bundle invecchia molto (anni) una nuova radice di GitHub può non essere riconosciuta | aggiornare regolarmente il core (il bundle arriva con il firmware stesso); fallback all'AP con upload manuale sempre disponibile |
+| Redirect / formato URL | GitHub può cambiare host della CDN | follow redirect generico, bundle completo, fallback AP |
+| Consumo | WiFi 100-300 mA di picco per 20-60 s (connessione + ~1,5 MB di download): ~2-5 mAh, trascurabile; il rischio è il calo di tensione sui picchi a batteria bassa | soglia 3,7 V prima di iniziare, scrittura in flash solo dopo connessione stabile |
+| Timeout / rete lenta | download bloccato a metà | timeout di connessione 20 s, inattività 15 s, totale 3 min; immagine parziale mai attivata (lo slot attivo non cambia finché `Update.end()` non riesce) |
+| Versione | rischio di reinstallare la stessa versione o tornare indietro | versione compilata (`FW_VERSION` dal tag della Release in GitHub Actions) confrontata con `firmware.json`; si aggiorna solo se maggiore |
+| Coesistenza | WiFi e BLE sulla stessa radio | mai attivi insieme nel flusso proposto |
+
+Feedback: LED interno non visibile → indicazioni nella sezione "Come capisce l'utente che il gesto è riuscito".

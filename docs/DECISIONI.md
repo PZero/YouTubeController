@@ -39,3 +39,10 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-11 | Schermo pieno su iPadOS solo via CSS (contenitore fisso a tutta finestra), niente Fullscreen API | Evita rifiuti da evento tastiera e perdita dei tasti; nell'app installata nella Home è a tutto schermo |
 | 2026-10-11 | Loop A-B: riporta ad A solo se B viene superato partendo da dentro l'intervallo; un preferito con loop riparte da A | Un seek manuale fuori dal loop non viene "risucchiato" |
 | 2026-10-11 | Icona generata da `app/icons/make_icons.py` (solo libreria standard Python) | Nessuna dipendenza da installare; SVG e PNG dalla stessa geometria |
+| 2026-10-11 | OTA: si entra tenendo premuto il pulsante + 5 scatti di manopola | Gesto non confondibile con pressione breve, media e lunga |
+| 2026-10-11 | Firmware compilato su GitHub Actions e pubblicato come Release | Build ripetibile, nessun ambiente di sviluppo locale necessario per gli aggiornamenti |
+| 2026-10-11 | WiFi configurato dall'ESP32 con rete propria + pagina di configurazione al primo avvio; credenziali solo sulla scheda | Le Release sono pubbliche: nessuna password nel firmware |
+| 2026-10-11 | R3 del TP4056 sostituita con 2,4 kΩ (carica a 0,5 A) | Meno calore in scatola chiusa; carica in ~5-6 h accettabile |
+| 2026-10-11 | Azzeramento WiFi: pulsante premuto + 5 scatti all'indietro (anche "Dimentica WiFi" dalla pagina web dell'ESP32); la PWA ha una sezione "Controller" solo informativa | La PWA non può inviare comandi al controller (niente Web Bluetooth, la tastiera HID è solo in uscita) |
+| 2026-10-11 | Riscontro dei gesti: servizio batteria BLE (livello nel widget iPadOS) + tasto innocuo intercettato dalla PWA (se iPadOS lo consegna) | Nessun costo hardware; risolve anche l'avviso di batteria scarica (LED interno non visibile) |
+| 2026-10-11 | Standby con pressione di 10 s, risveglio con 2 s | Riaccendere deve essere rapido; lo standby resta difficile da attivare per errore |

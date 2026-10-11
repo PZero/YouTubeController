@@ -2,7 +2,7 @@
 // Le richieste verso YouTube/googleapis/ytimg NON vengono intercettate.
 // Strategia: rete prima (cosi' gli aggiornamenti arrivano subito), cache se offline.
 // Per forzare la pulizia delle vecchie cache: incrementa CACHE_VERSION.
-const CACHE_VERSION = 'ytc-v1.0.0';
+const CACHE_VERSION = 'ytc-v1.1.0';
 const SHELL = [
   './',
   'index.html',
@@ -12,6 +12,7 @@ const SHELL = [
   'js/util.js',
   'js/keymap.js',
   'js/settings.js',
+  'js/controller-info.js',
   'js/favorites.js',
   'js/search.js',
   'js/player.js',

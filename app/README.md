@@ -55,6 +55,16 @@ riproduzione non rientra in [A, B). Se B < A vengono scambiati; se sono più vic
 - Pulsanti sotto il video: play/pausa, A–B (come il tasto L), stella preferito, schermo pieno.
 - Tocco su un risultato o un preferito: carica e avvia il video. Stella: aggiungi/rimuovi preferito.
 
+## Controller (Impostazioni → Controller)
+Sezione **solo informativa** (sottosezioni richiudibili): l'app non può inviare comandi al
+controller (niente Web Bluetooth su iPadOS; la tastiera HID va solo dal controller all'iPad).
+Contenuto: tabella dei gesti fisici (con i secondi attuali dei passi), come aggiornare il firmware
+(automatico dal WiFi di casa, oppure manuale: `.bin` dall'ultima Release → gesto aggiornamento →
+rete `YTController-OTA` → http://192.168.4.1), configurazione/azzeramento del WiFi di casa e un
+link "Apri pagina del controller". La pagina 192.168.4.1 è http: dalla PWA (https) si apre solo
+come link, nessuna richiesta diretta. Dati e testi in un solo punto: `js/controller-info.js`
+(da aggiornare quando cambia il firmware, ancora in sviluppo).
+
 ## Schermo pieno
 È quello della PWA sul contenitore del player, **mai** quello nativo di YouTube (`fs=0`), che
 sottrarrebbe i tasti alla pagina. Su iPadOS si usa solo il "pseudo-fullscreen" CSS
@@ -94,6 +104,7 @@ js/player.js           wrapper IFrame Player API
 js/search.js           YouTube Data API v3 + riconoscimento link/ID
 js/favorites.js        preferiti + esporta/importa
 js/settings.js         impostazioni e relativo dialog
+js/controller-info.js  GESTI del controller, aggiornamento firmware, WiFi (solo promemoria)
 js/fullscreen.js       schermo pieno (CSS su iPadOS)
 js/util.js             utilità
 icons/                 icon.svg (sorgente) + PNG generate
