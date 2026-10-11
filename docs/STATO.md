@@ -14,6 +14,7 @@ _Ultimo aggiornamento: 2026-10-11_
 - Scatola: anello, diffusore, vibrazione, ganci rifatti per **PLA**, verifica interferenze = 0; esportazione per Bambu Studio/MakerWorld (`enclosure/export/esporta.py`, zip di prova consegnato).
 - Tenuto il TP4056 (cella Jesspow 3300 mAh **non protetta**, Ø18,5×65); caricabatterie della SuperMini non usato.
 - README del repository con foto (senza EXIF) e render; licenza MIT (MakerWorld: CC BY 4.0).
+- Subagenti con modello dedicato per risparmiare token: app-pwa e design-3d su Sonnet, elettronica-firmware su Opus.
 
 ## Prossimi passi
 1. **Prototipo su breadboard** (piano proposto, in attesa di ok): arduino-cli + core ESP32 3.x + libreria BLE keyboard; firmware v0 con encoder (3 velocità) e pulsante (breve/media); prova con la PWA sull'iPad e taratura soglie. Chiedere: breadboard/Dupont, fili su encoder e pulsante, ok a scaricare arduino-cli.
