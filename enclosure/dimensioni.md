@@ -10,6 +10,12 @@ Unica fonte di verità per le misure fisiche. La aggiorna `elettronica-firmware`
 | Caricatore TP4056 USB-C | ~17-17,5 | ~26-28 (PCB) + sporgenza USB-C ~0,5-1 | ~4,3-4,9 totale (USB-C la parte più alta) | 4 fori agli angoli (Ø e interasse da misurare); USB-C su un lato corto; pad B+/B-/OUT+/OUT- sul lato opposto. Dettagli sotto |
 | Batteria 18650 | Ø18,5 (fino a ~19 con involucro) | 65,0 (non protetta; protette ~67-70) | | Più il portabatteria se usato (es. Keystone 1042: ~77 x 21 x 15 circa, da verificare) |
 | Boost MT3608 | | | | non usato |
+| Anello LED WS2812B 16 LED | Ø est. 45,0 | Ø int. 33,0 | 3,0 (PCB + LED) | Misure dell'utente col calibro (2026-10-11), affidabilità A. LED 5050 su una faccia. Retro piatto con 6 piazzole in un arco (~60°, sul raggio medio ~19,5): − / DO / +5V (uscita) e − / DI / + (ingresso, da usare; filo rosso già saldato su +). Saldature sporgono ~1 mm sul retro: prevedere spazio e uscita dei 3 fili (foto utente 2026-10-11, affidabilità B). Va sotto il coperchio, centrato sull'encoder (manopola Ø32 → LED appena fuori dal bordo) |
+| Modulo vibrazione (motore a moneta ~Ø10, prob. 1027) | 21,0 (lato con i pin) | 23,0 | 5,0 nel punto più spesso (PCB + motore, senza pin) | Misure dell'utente col calibro 2026-10-11, affidabilità A. Pin GND/VCC/IN passo 2,54 sul lato da 21 (da dissaldare e sostituire con fili); 2 fori di fissaggio sul lato dei pin (Ø e interasse non misurati: fissaggio a incastro, fori non necessari). Transistor, diodo e resistenze a bordo; IN alto = vibra; ~70-90 mA. Dalla foto dell'utente, affidabilità C |
+| Schedina millefori di interfaccia (portaschede) | ~30 | ~20 | ~1,6 PCB + ~2 saldature sotto; sopra ~12 con elettrolitico in piedi, ~7 se coricato | Stima (affidabilità C), da confermare a montaggio. Contiene i 2 transistor TO-92, resistenze, condensatori e il connettore dell'anello. Fissaggio: 2 fori Ø ~3 forati dall'utente o slitta a incastro sul portaschede |
+| Transistor S8550 / 2N3904 (TO-92) | ~4,6 (4,4-5,2) | ~3,6 (3,4-4,0) | corpo ~4,6 + piedini (accorciati a ~3-5 su millefori) | Package TO-92 standard, affidabilità B. Sostituiscono i MOSFET SOT-23 (vincolo costi 2026-10-11) |
+| Condensatore 47-100 µF 16 V elettrolitico | Ø5 (o Ø6,3) | | 11 (o 7) + piedini | Affidabilità B (taglie standard); sulla schedina, coricabile |
+| Connettore anello JST-PH 2,0 3 poli, volante (filo-filo) | ~8 | ~4,5 | lunghezza accoppiato ~15-18 + raggio di curvatura fili ~5 | Affidabilità C (housing PHR-3 + controparte). Se montato su schedina (testata B3B-PH-K-S): 7,9 x 4,5 x 6,0 sopra il PCB, + ~4 per la spina inserita e i fili (affidabilità B). Passo 2,0 |
 
 ## ESP32-S3 SuperMini - quote meccaniche
 
@@ -153,5 +159,31 @@ Quote nel sistema della scocca (`youtube_control.scad`): X larghezza (centro sco
 | Foro spillo RST | Ø1,8 con imbocco svasato Ø4, centro (-16,55; -9,4) | fondo, portaschede (tubetto guida), SuperMini |
 | Foro spillo BOOT (facoltativo) | Ø1,8, centro (-7,55; -9,4) | come sopra |
 | Spessore fondo / piastra portaschede | 3,0 / 2,8 (piastra da Z = 3 a 5,8) | fondo, portaschede |
+| Anello LED sotto la faccia superiore (eccezione alla regola modulare) | coassiale all'encoder (piano superiore x = 0, s = 14); PCB parallelo alla faccia, faccia inferiore a 7,0 dalla faccia superiore (centro: Y ≈ 15,0, Z ≈ 38,5); 4 ganci a scatto + 4 battute | scocca, anello |
+| Corona diffusore nella faccia superiore | r 16,6-22,4 attorno all'asse encoder | scocca, diffusore |
+| Connettore scocca → portaschede | JST-PH passo 2,0 sulla schedina millefori (3 poli solo anello, oppure 8 poli per tutto ciò che sta sulla scocca: da decidere) | anello/encoder/pulsante, schedina |
+| Modulo vibrazione | in piedi contro la testata posteriore della culla 18650: X 9,2 ± 10,5, Y 29,4-34,4, Z 11-34 | portaschede |
+| Schedina millefori | in piedi in 2 guide a slitta: X -0,5…19,5, PCB Y 42,6-44,2, Z 10-40 | portaschede |
+
+### Anello LED, diffusore, vibrazione, schedina - quote derivate (design-3d, 2026-10-11)
+
+Coordinate: "piano" = sistema del piano superiore inclinato (x larghezza, s lungo la pendenza, n normale; n = 0 faccia superiore, n < 0 verso l'interno); "scocca" = X, Y, Z come sopra. Parametri in `youtube_control.scad` (`lr_*`, `diff_*`) e `portaschede.scad` (`vib_*`, `mf_*`).
+
+| Quota | Valore | Note |
+|-------|--------|------|
+| Centro anello | piano (0; 14) = asse encoder | manopola Ø32 copre fino a r 16; LED (r ~17-22) appena fuori |
+| Aria cima LED → faccia interna | 1,0 (`lr_air`) | faccia inferiore PCB a n = -7,0 |
+| Distanza LED → diffusore | 3,0 (inserto: ponti 2,0 + aria 1,0); 1,0 in multi-materiale (diffusore pieno da 3) | passo LED ~7,7: la distanza attenua i punti luce, non li elimina |
+| Spessore PCB anello | **da misurare** (modello 1,6) | serve solo alla quota delle battute (`lr_pcb_t`) |
+| Ganci anello | 4, a 45° dall'arco piazzole e poi ogni 90°; braccio 3 x 1,0, lungo 5,6; dente 0,4 sotto il bordo del PCB | gioco radiale 0,25; deformazione ~1,9 % (meglio PETG; in PLA pochi montaggi) |
+| Battute anello | 4, alternate ai ganci; appoggio 0,4 sul bordo esterno (r 22,1-22,5) | i LED arrivano a r ~22 se centrati su 19,5 (affid. B) |
+| Arco piazzole | centrato a 30° (verso destra-retro, `lr_pad_ang`) | i fili scendono sopra la cella, lontano dall'encoder |
+| Diffusore "insert" | anello r 16,65-22,35, spessore 1,0, sottosquadro 0,15 sul bordo esterno (entra a scatto dall'alto); gioco 0,05 per lato | sotto: 4 ponti larghi 2,0 allineati ai ganci reggono il disco centrale dell'encoder |
+| Diffusore "mmu" | corona piena r 16,6-22,4 per tutto lo spessore (3,0), senza ponti | stampato con la scocca (AMS lite), stessa trasformazione |
+| Modulo vibrazione | retro piatto del PCB contro la testata posteriore della culla (Y 29,4); motore verso il retro; 4 nervature schiacciabili (interferenza 0,25); appoggi agli angoli a Z 11; pareti alte fino a Z 23 | sotto (Z 5,8-11) tunnel per il filo + della cella; > 25 mm dall'antenna |
+| Variante vibrazione "a contatto col coperchio" | `vib_top_contact = true`: la parete posteriore sale fino a 0,2 dalla faccia superiore | non attiva di default |
+| Schedina millefori | 20 (X) x 30 (Z) in piedi; componenti verso il davanti max 6,5 (elettrolitico **coricato**), saldature dietro max 2,0; parti alte ~10 (testata JST + spina) solo sopra Z 34,5; nessun componente a meno di 1,5 dai bordi laterali (guide) | spessore PCB 1,6 (C), guide con gioco 0,25 |
+| Vincolo cella | con 18650 protetta (67-70) la culla si allunga di 2-5 mm e la schedina non ci sta più | usare cella non protetta da 65 o rivedere la disposizione |
+| Bracci a scatto pannelli laterali | arrivano a X = ±21,25 (Y ≈ -24,7 e 32,7, Z 15-26): la culla 18650 li toccava (~1,6 mm³), ora c'è una tacca di 0,4 | difetto preesistente corretto |
 
 Motivo dello spostamento della presa USB (da X = +14 a X = -12): il portabatteria 18650 occupa il lato +X per quasi tutta la lunghezza (unico spazio libero dal corpo del pulsante, che sta a X = -10 davanti); il TP4056 va quindi sul lato -X dietro la SuperMini. A X = 14 il modulo (17,3 di larghezza) avrebbe toccato la torretta angolare; a -12 restano 1,8 mm.

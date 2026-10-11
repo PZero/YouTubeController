@@ -47,6 +47,7 @@ Oltre a eseguire, **proponi miglioramenti** e **segnala rischi e incongruenze** 
 - I componenti elettronici li fornisce l'utente: chiedere i modelli esatti prima di fissare le misure.
 
 ## Mappa del progetto
+- `README.md`: vetrina pubblica su GitHub (foto in `docs/foto/` senza EXIF, render in `docs/render/`); aggiornarlo a ogni `/fine-sessione`
 - `docs/STATO.md`: stato attuale, prossimi passi, problemi aperti
 - `docs/DECISIONI.md`: registro delle decisioni
 - `docs/REQUISITI.md`: requisiti dettagliati

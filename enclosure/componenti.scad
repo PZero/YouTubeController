@@ -96,6 +96,64 @@ module sled_electronics() {
     tp4056_model();
     battery_model();
     tp_screws_model();
+    if (vib_on) vib_model();
+    if (mf_on)  mf_model();
+}
+
+// anello LED WS2812B 16 LED (sistema del piano superiore, origine sull'asse K, z=0 faccia superiore)
+c_led = "#f4f4ec";
+module led_ring_model() {
+    color(c_black) translate([0,0,lr_nb]) difference() {
+        cylinder(d=lr_do, h=lr_pcb_t, $fn=96);
+        translate([0,0,-1]) cylinder(d=lr_di, h=lr_pcb_t+2, $fn=96);
+    }
+    color(c_led) for (i=[0:lr_n-1]) rotate(lr_pad_ang + 180/lr_n + i*360/lr_n)
+        translate([lr_led_r - lr_led/2, -lr_led/2, lr_nt]) cube([lr_led, lr_led, lr_t - lr_pcb_t]);
+    // piazzole con saldature sporgenti (arco lr_pad_arc) e 3 fili che scendono
+    color(c_metal) for (j=[0:5]) rotate(lr_pad_ang - lr_pad_arc/2 + (j+0.5)*lr_pad_arc/6)
+        translate([lr_pad_r, 0, lr_nb - lr_solder]) cylinder(d=2, h=lr_solder+0.01, $fn=12);
+    for (j=[0:2]) rotate(lr_pad_ang + lr_pad_arc/2 - (j+0.5)*lr_pad_arc/6)
+        color(["#202020","#2a7ad8","#d02a2a"][j]) translate([lr_pad_r, 0, lr_nb - lr_solder - 3]) cylinder(d=1.2, h=3, $fn=8);   // solo il primo tratto
+}
+// inviluppo per i controlli: PCB + LED + saldature (solo nell'arco piazzole)
+module led_ring_env() {
+    translate([0,0,lr_nb]) difference() {
+        cylinder(d=lr_do, h=lr_t, $fn=96);
+        translate([0,0,-1]) cylinder(d=lr_di, h=lr_t+2, $fn=96);
+    }
+    intersection() {
+        translate([0,0,lr_nb - lr_solder - 3]) difference() {
+            cylinder(r=lr_pad_r + 1.5, h=lr_solder + 3.01, $fn=96);
+            translate([0,0,-1]) cylinder(r=lr_pad_r - 1.5, h=lr_solder + 6, $fn=96);
+        }
+        rotate(lr_pad_ang - lr_pad_arc/2) rotate_extrude(angle=lr_pad_arc) square([40, 40]);
+    }
+}
+
+// modulo vibrazione (coordinate scocca): PCB in piedi contro la culla, motore verso il retro
+module vib_model() {
+    color(c_green) translate([vib_x - vib_w/2, vib_y0, vib_z0]) cube([vib_w, 1.6, vib_h]);
+    color(c_metal) translate([vib_x, vib_y0 + 1.6, vib_z0 + vib_h/2]) rotate([-90,0,0]) cylinder(d=10, h=vib_t - 1.6, $fn=40);
+    color(c_chip) translate([vib_x - 8, vib_y0 + 1.6, vib_z0 + vib_h - 6]) cube([3, 1.2, 3]);
+}
+module vib_env() translate([vib_x - vib_w/2, vib_y0, vib_z0]) cube([vib_w, vib_t, vib_h]);
+
+// schedina millefori (coordinate scocca) con testata JST-PH (da definire: 3 o 8 poli)
+jst_n = 8;                                 // poli della testata sulla schedina (3 = solo anello; 8 = tutto il coperchio)
+jst_w = 2.0*(jst_n-1) + 3.9;  jst_d = 4.5;  jst_h = 6.0;   // B?B-PH-K-S (passo 2.0); +~4 spina e fili
+module mf_model() {
+    color("#c8a95a") translate([mf_x0, mf_y0, mf_z0]) cube([mf_w, mf_t, mf_h]);
+    color("#2b2b2b") translate([mf_x0 + 2, mf_y0 - 5, mf_z0 + 4]) rotate([0,90,0]) cylinder(d=5, h=11, $fn=24);   // 100uF coricato
+    color(c_chip) translate([mf_x0 + 14, mf_y0 - 1.2, mf_z0 + 6]) cube([3, 1.2, 3]);                              // MOSFET
+    color("white") translate([mf_x0 + (mf_w - jst_w)/2, mf_y0 - jst_h, mf_z0 + mf_h - jst_d - 0.5]) cube([jst_w, jst_h, jst_d]);
+}
+module mf_env() {
+    translate([mf_x0, mf_y0, mf_z0]) cube([mf_w, mf_t, mf_h]);
+    translate([mf_x0 + mf_eng + 0.3, mf_y0 + mf_t - 0.01, mf_z0]) cube([mf_w - 2*(mf_eng + 0.3), mf_sold, mf_h]);   // saldature
+    // componenti: a >= mf_eng + 0.3 dai bordi laterali (le guide impegnano il bordo)
+    translate([mf_x0 + mf_eng + 0.3, mf_y0 - mf_comp, mf_z0]) cube([mf_w - 2*(mf_eng + 0.3), mf_comp + 0.01, mf_h]);
+    // fascia alta: testata JST con spina inserita (~10)
+    translate([mf_x0 + mf_eng + 0.3, mf_y0 - jst_h - 4, mf_hi_z]) cube([mf_w - 2*(mf_eng + 0.3), jst_h + 4, mf_z0 + mf_h - mf_hi_z]);
 }
 
 // viti principali (coordinate scocca)

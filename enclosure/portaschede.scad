@@ -72,6 +72,46 @@ bat_lin = bat_len + bat_allow;
 bat_lc  = bat_lin + 2*bat_end_t;
 bat_zc  = sp_top + bat_lift + bat_d/2;
 bat_xo  = bat_r + bat_wall;                // semilarghezza esterna culla
+bat_y1  = bat_y0 + bat_lc;                 // faccia posteriore della testata posteriore
+bat_head_top = bat_zc + ct_h/2 + 0.5;      // quota della cima delle testate
+
+// ---------------- Modulo vibrazione (dimensioni.md: 21 x 23 x 5 con motore) ----------------
+// In piedi dietro la culla 18650: il retro piatto del PCB appoggia sulla testata posteriore della culla
+// (accoppiamento rigido culla -> piastra -> fondo -> scocca), lato motore verso il retro, premuto da
+// nervature schiacciabili. Lato dei pin (21) in alto: pad dei fili accessibili. Nessuna vite.
+// La zona e' a >25 mm dall'antenna della SuperMini.
+vib_on  = true;
+vib_w   = 21.0;  vib_h = 23.0;  vib_t = 5.0;     // lato pin (orizzontale, in alto), altezza, spessore max (A)
+vib_c   = 0.2;             // gioco per lato in larghezza; gioco in spessore prima delle nervature
+vib_rib = 0.45;            // nervature schiacciabili sul lato motore (interferenza = vib_rib - vib_c)
+vib_rib_x = [-7.5, -2.5, 2.5, 7.5];   // posizione nervature (posizione del motore sul PCB non nota)
+vib_x   = 9.2;             // centro in X: parete destra a ~0.3 dai bracci a scatto dei pannelli (X=21.25)
+vib_z0  = 11.0;            // appoggio del bordo inferiore (sotto: tunnel per il filo + della cella, Z 5.8-11)
+vib_hold = 12.0;           // altezza delle pareti sopra l'appoggio
+vib_wall = 1.0;  vib_back = 1.2;   // pareti laterali / parete posteriore
+vib_ledge = 2.0;           // larghezza appoggi sotto gli angoli del PCB
+vib_top_contact = false;   // ALTERNATIVA: la parete posteriore sale fino a toccare la faccia superiore
+vib_top_gap = 0.2;         //   (vibrazione trasmessa anche direttamente al coperchio); gioco residuo
+vib_y0  = bat_y1;                              // faccia del PCB (retro piatto) = testata della culla
+vib_y1  = vib_y0 + vib_t + vib_c;              // faccia interna della parete posteriore
+vib_xi  = [vib_x - vib_w/2 - vib_c, vib_x + vib_w/2 + vib_c];   // facce interne delle pareti laterali
+
+// ---------------- Schedina millefori di interfaccia (dimensioni.md: ~30 x 20, affid. C) ----------------
+// In piedi (20 in X, 30 in Z) dietro al modulo vibrazione, in 2 guide a slitta: si infila dall'alto.
+// Lato componenti verso il davanti (verso il modulo vibrazione), lato saldature verso la parete posteriore.
+mf_on   = true;
+mf_w    = 20;  mf_h = 30;  mf_t = 1.6;          // larghezza (X), altezza (Z), spessore PCB (C)
+mf_sold = 2.0;             // sporgenza saldature sul retro (C)
+mf_comp = 6.5;             // ingombro componenti sul davanti: elettrolitico 100uF COricato (Ø5-6.3);
+                           // parti piu' alte (testata JST, ~10) solo nella fascia alta (Z > mf_hi_z)
+mf_g_c  = 0.25;            // gioco della scanalatura (spessore e fondo)
+mf_eng  = 1.2;             // impegno del bordo della schedina nella guida
+mf_post_t = 1.2;           // spessore guida oltre la scanalatura
+mf_x0   = -0.5;            // bordo sinistro della schedina
+mf_z0   = 10.0;            // bordo inferiore (sopra le torrette delle viti, Z 9)
+mf_post_h = 16;            // altezza guide sopra mf_z0
+mf_y0   = vib_y1 + vib_back + 0.3 + mf_comp;   // faccia componenti del PCB
+mf_hi_z = vib_z0 + vib_h + 0.5;                // sopra questa quota i componenti possono sporgere ~10
 
 // ----------------------------------------------------------------------
 module sled_plate2d() {
@@ -118,7 +158,10 @@ module sled() {
             for (h = tp_holes) translate([h.x, h.y, sp_top - 0.01]) cylinder(d=tp_so_d, h=tp_zb - sp_top + 0.01, $fn=32);
             // culla 18650
             bat_cradle_solid();
+            if (vib_on) vib_holder();
+            if (mf_on)  mf_guides();
         }
+        if (vib_on) vib_cuts();
         // fori pilota viti fondo (dal basso)
         for (p = sled_scr) translate([p.x, p.y, lid_t - 0.01]) cylinder(d=pilot_d, h=sled_boss_top - lid_t - 0.8, $fn=24);
         // fori spillo con imbocco svasato
@@ -132,9 +175,65 @@ module sled() {
         translate([sm_o.x + sm_end + 0.3, -BL, sp_top - plug_ch])
             cube([sm_w - 2*sm_end - 0.6, BL + sm_o.y - 0.5, plug_ch + 0.01]);
         bat_cradle_cuts();
+        // spazio per i bracci a scatto dei pannelli laterali (toccavano la culla 18650)
+        arm_clear();
         // gioco attorno alle torrette angolari della scocca (a tutta altezza)
         for (sx=[-1,1], sy=[-1,1]) translate([sx*px, sy*py, lid_t - 1]) cylinder(r=post_r+post_clr, h=60);
     }
+}
+
+// ingombro dei bracci a scatto dei pannelli (+ arm_clr), nel sistema del pannello (vedi end_arm)
+arm_clr = 0.4;
+module arm_clear() on_walls() for (sg = [1, -1]) {
+    vhi = vtop(sg);  aw = min(arm_w, vhi - vlo() - 2);  vc = (vlo() + vhi)/2;
+    u0 = uw - arm_gap;  lze = wall + duct_len + catch_gap + barb_ramp;
+    translate([sg > 0 ? u0 - arm_t - arm_clr : -(u0 + barb_h + arm_clr), vc - aw/2 - arm_clr, tp])
+        cube([arm_t + barb_h + 2*arm_clr, aw + 2*arm_clr, lze - tp + arm_clr]);
+}
+
+// ---------------- sede modulo vibrazione ----------------
+module vib_holder() {
+    ztop = vib_z0 + vib_hold;
+    // pareti laterali (dalla piastra) e parete posteriore
+    for (xs = [[vib_xi[0] - vib_wall, vib_xi[0]], [vib_xi[1], vib_xi[1] + vib_wall]])
+        translate([xs[0], vib_y0 - 0.01, sp_top - 0.01]) cube([vib_wall, vib_y1 - vib_y0 + vib_back + 0.01, ztop - sp_top]);
+    translate([vib_xi[0] - vib_wall, vib_y1, sp_top - 0.01]) cube([vib_xi[1] - vib_xi[0] + 2*vib_wall, vib_back, ztop - sp_top]);
+    // alternativa: parete posteriore fino alla faccia superiore (taglio inclinato come il piano)
+    if (vib_top_contact)
+        intersection() {
+            translate([vib_xi[0] - vib_wall, vib_y1, ztop - 0.01]) cube([vib_xi[1] - vib_xi[0] + 2*vib_wall, vib_back, 60]);
+            top_frame() translate([-BW, -BL, -wall - vib_top_gap - 100]) cube([2*BW, 2*BL, 100]);
+        }
+    // appoggi sotto gli angoli del PCB
+    for (s = [0, 1]) translate([s == 0 ? vib_xi[0] - 0.01 : vib_xi[1] - vib_ledge + 0.01, vib_y0 - 0.01, vib_z0 - 1.2])
+        cube([vib_ledge, vib_y1 - vib_y0 + 0.02, 1.2]);
+    // nervature schiacciabili sul lato motore
+    for (dx = vib_rib_x) translate([vib_x + dx - 0.6, vib_y1 - vib_rib, vib_z0 + 1]) cube([1.2, vib_rib + 0.01, vib_hold - 1]);
+}
+module vib_cuts() {
+    // finestra nella parete sinistra: il filo + della cella esce dalla testata e corre verso il TP4056
+    translate([vib_xi[0] - vib_wall - 1, vib_y0 + 0.01, sp_top]) cube([vib_wall + 2, vib_y1 - vib_y0 - 0.02, vib_z0 - 1.2 - sp_top - 0.6]);
+}
+
+// ---------------- guide schedina millefori ----------------
+module mf_guides() {
+    gw = mf_t + 2*mf_g_c;                      // larghezza scanalatura
+    yd = mf_y0 - mf_g_c - mf_post_t;           // fronte delle guide
+    dp = gw + 2*mf_post_t;                     // profondita' guide (Y)
+    for (s = [0, 1]) {
+        xo = s == 0 ? mf_x0 - mf_g_c - mf_post_t : mf_x0 + mf_w - mf_eng;   // bordo sinistro della guida
+        wx = mf_post_t + mf_g_c + mf_eng;
+        difference() {
+            translate([xo, yd, sp_top - 0.01]) cube([wx, dp, mf_z0 + mf_post_h - sp_top]);
+            // scanalatura (chiusa in basso a mf_z0: appoggio della schedina)
+            translate([s == 0 ? mf_x0 - mf_g_c : mf_x0 + mf_w - mf_eng - 1, mf_y0 - mf_g_c, mf_z0])
+                cube([mf_eng + mf_g_c + 1, gw, 40]);
+            // invito in cima
+            translate([xo - 1, mf_y0 + mf_t/2, mf_z0 + mf_post_h]) rotate([45,0,0]) cube([wx + 2, 1.2, 1.2], center=true);
+        }
+    }
+    // traversino tra le due guide sotto la schedina (irrigidisce, appoggio continuo)
+    translate([mf_x0, mf_y0 - mf_g_c - mf_post_t, sp_top - 0.01]) cube([mf_w, gw + 2*mf_post_t, 1.6]);
 }
 
 // ---------------- culla 18650 ----------------

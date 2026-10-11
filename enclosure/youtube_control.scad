@@ -10,7 +10,8 @@
 //                modulo TP4056, portabatteria 18650 stampato. Si avvita al fondo dal basso (4x M3)
 //   4  panel x2  pannelli laterali a feritoie, si incastrano a scatto
 //   5  knob      manopola zigrinata (stile ottone), sede a pressione per albero zigrinato 18 denti
-//   6  collar    anello decorativo attorno alla manopola
+//   6  collar    anello decorativo attorno alla manopola (solo se led_ring = false)
+//   6b diffuser  corona traslucida sopra l'anello LED (filamento bianco; inserto a scatto o multi-materiale)
 //   7  cap       cappuccio del pulsante PBS-110 (calzato sul tasto blu, copre il dado)
 //   8  test_ring anelli di prova della sede zigrinata (3 giochi diversi), da stampare per primi
 //
@@ -20,6 +21,8 @@
 //   - ESP32-S3 SuperMini, modulo TP4056 USB-C, cella 18650 + contatti a molla/piastrina
 //   - 8x viti M3x8 svasate autofilettanti (4 fondo->scocca, 4 fondo->portaschede)
 //   - 4x viti M2x5 autofilettanti (TP4056)
+//   - anello LED WS2812B 16 LED (sotto la faccia superiore, a scatto); modulo vibrazione e schedina
+//     millefori di interfaccia (sul portaschede, a incastro)
 //
 //  mode  = "print"     -> piatti di stampa (plate = 1/2/3, 0 = tutti affiancati, solo anteprima)
 //          "assembly"  -> tutto montato (controllo incastri)
@@ -29,8 +32,8 @@
 // ======================================================================
 
 mode          = "print";     // "print" | "assembly" | "exploded"
-plate         = 1;           // 1 = scocca | 2 = fondo + portaschede + pannelli | 3 = manopola, anello, cappuccio, test | 0 = tutti
-part          = "all";       // "all" | "body" | "lid" | "sled" | "panel" | "knob" | "collar" | "cap" | "test_ring"
+plate         = 1;           // 1 = scocca | 2 = fondo + portaschede + pannelli | 3 = manopola, cappuccio, test | 4 = diffusore | 0 = tutti
+part          = "all";       // "all" | "body" | "lid" | "sled" | "panel" | "knob" | "collar" | "diffuser" | "cap" | "test_ring"
 section_view  = false;       // sezione (solo assembly/exploded)
 cut_x         = 0;           // piano di sezione (si toglie il lato X > cut_x)
 section_shell = false;       // true: la sezione taglia solo scocca e pannelli (interno visibile)
@@ -125,7 +128,7 @@ enc_end    = (enc_bush - wall) + enc_shaft;      // fine albero sopra la faccia 
 bore_depth = enc_end - knob_gap + 0.5;
 knob_h     = bore_depth + 2.5;
 
-// anello decorativo (collar)
+// anello decorativo (collar): usato solo se led_ring = false (al suo posto c'e' il diffusore luminoso)
 ring_ri = 17.3;  ring_ro = 20.5;  ring_h = 1.4;
 pin_r = 18.9;  pin_d_c = 2.2;  pin_len = 2.0;
 pin_hole_d = 2.5;  pin_hole_depth = 2.2;
@@ -158,6 +161,43 @@ cap_cav_d  = btn_nut_af/cos(30) + 1.2;                   // cavita' sopra il dad
 cap_cav_h  = max(0.6, z_nut_top + btn_travel + cap_gap - cap_z0);
 cap_h      = z_key_top + cap_top_t - cap_z0;
 z_ceil     = -wall;
+
+// ----------------------------------------------------------------------
+//  ANELLO LED WS2812B 16 LED + DIFFUSORE (quote: dimensioni.md)
+//  Eccezione alla regola modulare: l'anello sta sotto la faccia superiore della scocca,
+//  coassiale all'encoder; i fili scendono al portaschede con un connettore JST-PH staccabile.
+//  Quote nel sistema del piano superiore (z=0 faccia superiore, z<0 verso l'interno), centro = K.
+// ----------------------------------------------------------------------
+led_ring   = true;          // false = torna l'anello decorativo (collar) senza luce
+diff_mode  = "insert";      // "insert" = diffusore separato a scatto (qualsiasi stampante)
+                            // "mmu"    = diffusore stampato insieme alla scocca con AMS lite (cambio filamento)
+lr_do   = 45.0;             // diametro esterno PCB (A, calibro utente)
+lr_di   = 33.0;             // diametro interno PCB (A)
+lr_t    = 3.0;              // spessore totale PCB + LED (A)
+lr_pcb_t = 1.6;             // spessore del solo PCB: DA MISURARE (serve solo alle battute superiori)
+lr_n    = 16;               // LED 5050
+lr_led  = 5.0;              // lato LED 5050 (B, package standard)
+lr_led_r = 19.5;            // raggio dei LED (B: raggio medio, da foto)
+lr_pad_r = 19.5;  lr_pad_arc = 60;  lr_solder = 1.0;   // piazzole sul retro: raggio, arco, sporgenza saldature (B)
+lr_pad_ang = 30;            // direzione del centro dell'arco piazzole (piano superiore: 0 = +X, 90 = verso il retro)
+                            // -> verso destra-retro, sopra la cella: i fili scendono a lato della schedina millefori
+                            //    senza passare sopra la sua testata JST
+lr_air  = 1.0;              // aria tra la cima dei LED e la faccia interna (distanza LED-diffusore = lr_air + wall - diff_t)
+lr_c    = 0.25;             // gioco radiale PCB / ganci
+// ganci a scatto (4) e battute (4), alternati, fuori dall'arco delle piazzole
+lr_clips = 4;  lr_clip_a0 = lr_pad_ang + 45;
+lr_clip_w = 3.0;  lr_clip_t = 1.0;       // larghezza e spessore del braccio flessibile
+lr_barb = 0.4;                           // sovrapposizione del dente sotto il PCB
+lr_barb_c = 0.1;  lr_barb_ramp = 1.5;    // gioco verticale del dente, altezza rampa
+lr_stop = 0.4;  lr_stop_w = 2.5;         // battuta superiore: sovrapposizione sul bordo esterno del PCB
+// diffusore (corona traslucida nella faccia superiore)
+diff_ri  = knob_d/2 + 0.6;  // raggio interno (appena fuori dalla manopola)
+diff_ro  = 22.4;            // raggio esterno (LED fino a ~22)
+diff_t   = 1.0;             // spessore del diffusore "insert" (0.8-1.2; resta wall-diff_t = 2 di ponti)
+diff_c   = 0.05;            // gioco radiale per lato dell'inserto (0 = pressione)
+diff_snap = 0.15;           // sottosquadro sul bordo esterno: l'inserto entra a scatto dall'alto
+diff_brg_n = 4;  diff_brg_w = 2.0;   // ponti che reggono il disco centrale (solo "insert"), allineati ai ganci
+c_diff = "#eef0ee";         // colore anteprima (PETG/PLA bianco naturale)
 
 // presa cavo (USB-C del TP4056) sul retro.
 // usb_x spostato da +14 a -12: lato opposto al portabatteria e 1.8 mm di distanza dalla torretta
@@ -245,6 +285,8 @@ module body() {
             on_walls() translate([0,0,tp])
                 linear_extrude(wall + duct_len - tp)
                     offset(r=duct_w) window2d();
+            // ganci e battute dell'anello LED
+            if (led_ring) top_frame() translate([K.x, K.y, 0]) lr_holders();
         }
 
         // --- finestre pannelli: tasca esterna + foro passante
@@ -257,9 +299,10 @@ module body() {
 
         // --- lavorazioni sul piano superiore inclinato (tutte perpendicolari al piano)
         top_frame() {
-            // manopola: foro encoder + 4 fori per i perni dell'anello
+            // manopola: foro encoder + (diffusore dell'anello LED | 4 fori per i perni dell'anello decorativo)
             translate([K.x, K.y, -wall-1]) cylinder(d=enc_hole, h=wall+2);
-            for (a=[45:90:315])
+            if (led_ring) translate([K.x, K.y, 0]) diffuser_cut();
+            else for (a=[45:90:315])
                 translate([K.x+pin_r*cos(a), K.y+pin_r*sin(a), -pin_hole_depth])
                     cylinder(d=pin_hole_d, h=pin_hole_depth+1, $fn=24);
 
@@ -431,6 +474,63 @@ module collar() {
 }
 
 // ======================================================================
+//  5b) ANELLO LED: diffusore e sedi (sistema del piano superiore, origine sull'asse K, z=0 faccia superiore)
+// ======================================================================
+lr_nb = -wall - lr_air - lr_t;          // faccia inferiore del PCB dell'anello
+lr_nt = lr_nb + lr_pcb_t;               // faccia superiore del PCB (battute)
+lr_rb = lr_do/2 + lr_c;                 // faccia interna dei bracci a scatto
+
+// profilo dell'inserto (r, z): sottosquadro sul bordo esterno in basso
+function diff_prof(c) = [[diff_ri + c, -diff_t], [diff_ro + diff_snap - c, -diff_t],
+                         [diff_ro - c, -diff_t*0.35], [diff_ro - c, 0], [diff_ri + c, 0]];
+
+module diffuser_cut() {
+    if (diff_mode == "mmu")
+        translate([0,0,-wall-1]) difference() {
+            cylinder(r=diff_ro, h=wall+2, $fn=120);
+            translate([0,0,-1]) cylinder(r=diff_ri, h=wall+4, $fn=120);
+        }
+    else {
+        // sede dell'inserto (dalla faccia superiore) ...
+        rotate_extrude($fn=120) polygon([[diff_ri, -diff_t], [diff_ro + diff_snap, -diff_t],
+                                         [diff_ro, -diff_t*0.35], [diff_ro, 1], [diff_ri, 1]]);
+        // ... e finestre verso i LED, interrotte dai ponti che reggono il disco centrale
+        difference() {
+            translate([0,0,-wall-1]) difference() {
+                cylinder(r=diff_ro, h=wall+1-diff_t+0.01, $fn=120);
+                translate([0,0,-1]) cylinder(r=diff_ri, h=wall+4, $fn=120);
+            }
+            for (i=[0:diff_brg_n-1]) rotate(lr_clip_a0 + i*360/diff_brg_n)
+                translate([diff_ri - 1, -diff_brg_w/2, -wall-2]) cube([diff_ro - diff_ri + 2, diff_brg_w, wall+2]);
+        }
+    }
+}
+
+// diffusore (z=0 faccia superiore della scocca). "insert": anello a scatto; "mmu": riempie esattamente la corona
+module diffuser() {
+    if (diff_mode == "mmu")
+        translate([0,0,-wall]) difference() {
+            cylinder(r=diff_ro, h=wall, $fn=120);
+            translate([0,0,-1]) cylinder(r=diff_ri, h=wall+2, $fn=120);
+        }
+    else rotate_extrude($fn=120) polygon(diff_prof(diff_c));
+}
+
+// 4 bracci a scatto (dente sotto il PCB) + 4 battute (sopra il bordo esterno del PCB), alternati
+module lr_holders() {
+    ntip = lr_nb - lr_barb_c - lr_barb_ramp;
+    for (i=[0:lr_clips-1]) rotate(lr_clip_a0 + i*360/lr_clips) {
+        // braccio flessibile, attaccato solo alla faccia interna
+        translate([lr_rb, -lr_clip_w/2, ntip]) cube([lr_clip_t, lr_clip_w, -wall - ntip + 0.01]);
+        // dente con rampa d'invito
+        translate([0, lr_clip_w/2, 0]) rotate([90,0,0]) linear_extrude(lr_clip_w)
+            polygon([[lr_rb + 0.01, lr_nb - lr_barb_c], [lr_do/2 - lr_barb, lr_nb - lr_barb_c], [lr_rb + 0.01, ntip]]);
+    }
+    for (i=[0:lr_clips-1]) rotate(lr_clip_a0 + (i + 0.5)*360/lr_clips)
+        translate([lr_do/2 - lr_stop, -lr_stop_w/2, lr_nt]) cube([lr_stop + lr_c + 1.0, lr_stop_w, -wall - lr_nt + 0.01]);
+}
+
+// ======================================================================
 //  6) CAPPUCCIO PULSANTE (z=0 = bordo inferiore; calza sul tasto blu del PBS-110)
 // ======================================================================
 module cap() {
@@ -459,8 +559,13 @@ module cap() {
 function plate_on(n) = (part != "all" || plate == 0 || plate == n);
 
 // piatto 1: scocca, piano superiore sul piatto (nessun supporto: lamatura e fori con piccoli ponti)
+// con diff_mode="mmu" il diffusore va esportato a parte (part="diffuser") con la STESSA trasformazione:
+// in Bambu Studio si caricano i due STL come parti di un unico oggetto e si assegna il filamento bianco.
+module plate1_frame() translate([0, -3.6, 0]) rotate([180,0,0]) rotate([-tilt,0,0]) translate([0,0,-z0]) children();
 module plate1() {
-    show("body") translate([0, -3.6, 0]) rotate([180,0,0]) rotate([-tilt,0,0]) translate([0,0,-z0]) body();
+    show("body") plate1_frame() body();
+    if (led_ring && diff_mode == "mmu")
+        show("diffuser") color(c_diff) plate1_frame() top_frame() translate([K.x, K.y, 0]) diffuser();
 }
 
 // piatto 2: fondo (faccia esterna sotto), portaschede (piastra sotto), 2 pannelli (faccia esterna sotto)
@@ -476,15 +581,22 @@ module plate2() {
 // piatto 3 (colore accento): manopola e cappuccio capovolti, anello capovolto, anelli di prova
 module plate3() {
     show("knob")      translate([-25, 18, knob_h]) rotate([180,0,0]) knob();
-    show("collar")    translate([ 25, 18, ring_h]) rotate([180,0,0]) collar();
+    if (!led_ring) show("collar") translate([ 25, 18, ring_h]) rotate([180,0,0]) collar();
     show("cap")       translate([-25,-22, cap_h]) rotate([180,0,0]) cap();
     show("test_ring") translate([  5,-22, 0]) test_ring();
+}
+
+// piatto 4 (filamento bianco/naturale): diffusore "insert", faccia a vista sul piatto
+module plate4() {
+    if (led_ring && diff_mode == "insert")
+        show("diffuser") rotate([180,0,0]) diffuser();
 }
 
 module print_layout() {
     if (plate_on(1)) translate([plate==0 && part=="all" ? -190 : 0, 0, 0]) color(c_body) plate1();
     if (plate_on(2)) color(c_base) plate2();
     if (plate_on(3)) translate([plate==0 && part=="all" ? 190 : 0, 0, 0]) color(c_acc) plate3();
+    if (plate_on(4)) translate([0, plate==0 && part=="all" ? 125 : 0, 0]) color(c_diff) plate4();
 }
 
 // ======================================================================
@@ -507,13 +619,15 @@ module assembly(ex) {
         color(c_base) show("sled") translate([0,0,e_sled]) sled();
         translate([0,0,e_body]) top_frame() {
             color(c_acc) show("knob")   translate([K.x,K.y,knob_gap+1.6*ex]) knob();
-            color(c_acc) show("collar") translate([K.x,K.y,0.8*ex]) collar();
+            if (!led_ring) color(c_acc) show("collar") translate([K.x,K.y,0.8*ex]) collar();
+            if (led_ring) color(c_diff) show("diffuser") translate([K.x,K.y,0.8*ex]) diffuser();
             color(c_acc) show("cap")    translate([B.x,B.y,cap_z0+1.2*ex]) cap();
         }
         if (show_electronics && part=="all") {
             translate([0,0,e_body]) top_frame() {
                 translate([K.x,K.y,-3.2*ex]) encoder_model(ex > 0);
                 translate([B.x,B.y,-3.2*ex]) button_model(ex > 0);
+                if (led_ring) translate([K.x,K.y,-2.4*ex]) led_ring_model();
             }
             translate([0,0,e_sled]) sled_electronics();
             translate([0,0,e_lid]) screws_model(ex);
