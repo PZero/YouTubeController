@@ -48,3 +48,7 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-11 | Standby con pressione di 10 s, risveglio con 2 s | Riaccendere deve essere rapido; lo standby resta difficile da attivare per errore |
 | 2026-10-11 | Feedback: anello WS2812B 16 LED attorno alla manopola (sotto il coperchio, diffusore traslucido) + modulo vibrazione a moneta per i gesti | Componenti già in possesso dell'utente; luce dove si guarda, vibrazione senza guardare |
 | 2026-10-11 | Alimentazione dell'anello interrotta da P-MOSFET comandato da GPIO; luminosità limitata a ~10-15% | 16 LED spenti assorbono 10-16 mA: scaricherebbero la batteria in standby |
+| 2026-10-11 | Diffusore dell'anello stampato a parte (diff_mode = "insert"), in PETG/PLA bianco, incastrato a scatto | L'utente non ha l'AMS lite; stampe separate e semplici |
+| 2026-10-11 | Tutti i pezzi in PLA (diffusore in PLA bianco) | Filamenti disponibili all'utente; ganci a scatto da dimensionare per PLA (deformazione ≤ ~1,5%) |
+| 2026-10-11 | Licenza MIT per tutto il progetto (codice, modello 3D, documentazione) | Scelta dell'utente: massimo riuso, con la sola citazione |
+| 2026-10-11 | Su MakerWorld il modello 3D si pubblica con licenza CC BY 4.0 (sul repository resta MIT) | Scelta dell'utente: licenza equivalente alla MIT tra quelle di MakerWorld (riuso libero, anche commerciale, con citazione) |

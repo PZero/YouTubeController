@@ -32,8 +32,8 @@
 // ======================================================================
 
 mode          = "print";     // "print" | "assembly" | "exploded"
-plate         = 1;           // 1 = scocca | 2 = fondo + portaschede + pannelli | 3 = manopola, cappuccio, test | 4 = diffusore | 0 = tutti
-part          = "all";       // "all" | "body" | "lid" | "sled" | "panel" | "knob" | "collar" | "diffuser" | "cap" | "test_ring"
+plate         = 1;           // 1 = scocca | 2 = fondo + portaschede + pannelli | 3 = manopola, cappuccio, test | 4 = diffusore | 5 = prova tolleranze | 0 = tutti
+part          = "all";       // "all" | "body" | "lid" | "sled" | "panel" | "knob" | "collar" | "diffuser" | "cap" | "test_ring" | "test_tile"
 section_view  = false;       // sezione (solo assembly/exploded)
 cut_x         = 0;           // piano di sezione (si toglie il lato X > cut_x)
 section_shell = false;       // true: la sezione taglia solo scocca e pannelli (interno visibile)
@@ -186,8 +186,11 @@ lr_air  = 1.0;              // aria tra la cima dei LED e la faccia interna (dis
 lr_c    = 0.25;             // gioco radiale PCB / ganci
 // ganci a scatto (4) e battute (4), alternati, fuori dall'arco delle piazzole
 lr_clips = 4;  lr_clip_a0 = lr_pad_ang + 45;
-lr_clip_w = 3.0;  lr_clip_t = 1.0;       // larghezza e spessore del braccio flessibile
-lr_barb = 0.4;                           // sovrapposizione del dente sotto il PCB
+lr_clip_w = 3.0;  lr_clip_t = 0.8;       // larghezza e spessore del braccio flessibile (PLA: 2 perimetri)
+lr_barb = 0.3;                           // sovrapposizione del dente sotto il PCB
+lr_clip_root = 2.0;                      // il braccio nasce in una tasca profonda fino a 2 dalla faccia superiore:
+                                         // lunghezza libera ~5.1 -> deformazione 1.5*t*barb/L^2 ~ 1.4 % (PLA <= 1.5 %)
+lr_pocket_c = 0.5;                       // gioco della tasca verso l'esterno (spazio per la flessione)
 lr_barb_c = 0.1;  lr_barb_ramp = 1.5;    // gioco verticale del dente, altezza rampa
 lr_stop = 0.4;  lr_stop_w = 2.5;         // battuta superiore: sovrapposizione sul bordo esterno del PCB
 // diffusore (corona traslucida nella faccia superiore)
@@ -197,7 +200,7 @@ diff_t   = 1.0;             // spessore del diffusore "insert" (0.8-1.2; resta w
 diff_c   = 0.05;            // gioco radiale per lato dell'inserto (0 = pressione)
 diff_snap = 0.15;           // sottosquadro sul bordo esterno: l'inserto entra a scatto dall'alto
 diff_brg_n = 4;  diff_brg_w = 2.0;   // ponti che reggono il disco centrale (solo "insert"), allineati ai ganci
-c_diff = "#eef0ee";         // colore anteprima (PETG/PLA bianco naturale)
+c_diff = "#eef0ee";         // colore anteprima (PLA bianco)
 
 // presa cavo (USB-C del TP4056) sul retro.
 // usb_x spostato da +14 a -12: lato opposto al portabatteria e 1.8 mm di distanza dalla torretta
@@ -269,6 +272,7 @@ module show(p) { if (part=="all" || part==p) children(); }
 //  1) SCOCCA
 // ======================================================================
 module body() {
+  union() {
     difference() {
         union() {
             difference() {
@@ -285,8 +289,8 @@ module body() {
             on_walls() translate([0,0,tp])
                 linear_extrude(wall + duct_len - tp)
                     offset(r=duct_w) window2d();
-            // ganci e battute dell'anello LED
-            if (led_ring) top_frame() translate([K.x, K.y, 0]) lr_holders();
+            // battute dell'anello LED (i bracci a scatto si aggiungono dopo le tasche)
+            if (led_ring) top_frame() translate([K.x, K.y, 0]) lr_stops();
         }
 
         // --- finestre pannelli: tasca esterna + foro passante
@@ -301,7 +305,7 @@ module body() {
         top_frame() {
             // manopola: foro encoder + (diffusore dell'anello LED | 4 fori per i perni dell'anello decorativo)
             translate([K.x, K.y, -wall-1]) cylinder(d=enc_hole, h=wall+2);
-            if (led_ring) translate([K.x, K.y, 0]) diffuser_cut();
+            if (led_ring) translate([K.x, K.y, 0]) { diffuser_cut(); lr_pockets(); }
             else for (a=[45:90:315])
                 translate([K.x+pin_r*cos(a), K.y+pin_r*sin(a), -pin_hole_depth])
                     cylinder(d=pin_hole_d, h=pin_hole_depth+1, $fn=24);
@@ -324,6 +328,9 @@ module body() {
         translate([usb_x, BL/2+1, usb_z]) rotate([90,0,0])
             linear_extrude(wall+3) rr2d(usb_w, usb_h, usb_r);
     }
+    // bracci a scatto dell'anello LED (radicati nel fondo delle tasche)
+    if (led_ring) top_frame() translate([K.x, K.y, 0]) lr_arms();
+  }
 }
 
 module arc_text(s, r, size, a0, c) {
@@ -517,15 +524,19 @@ module diffuser() {
 }
 
 // 4 bracci a scatto (dente sotto il PCB) + 4 battute (sopra il bordo esterno del PCB), alternati
-module lr_holders() {
+module lr_pockets() for (i=[0:lr_clips-1]) rotate(lr_clip_a0 + i*360/lr_clips)
+    translate([lr_rb, -lr_clip_w/2 - 0.3, -wall - 1]) cube([lr_clip_t + lr_pocket_c, lr_clip_w + 0.6, wall + 1 - lr_clip_root]);
+module lr_arms() {
     ntip = lr_nb - lr_barb_c - lr_barb_ramp;
     for (i=[0:lr_clips-1]) rotate(lr_clip_a0 + i*360/lr_clips) {
-        // braccio flessibile, attaccato solo alla faccia interna
-        translate([lr_rb, -lr_clip_w/2, ntip]) cube([lr_clip_t, lr_clip_w, -wall - ntip + 0.01]);
+        // braccio flessibile, radicato nel fondo della tasca
+        translate([lr_rb, -lr_clip_w/2, ntip]) cube([lr_clip_t, lr_clip_w, -lr_clip_root - ntip + 0.01]);
         // dente con rampa d'invito
         translate([0, lr_clip_w/2, 0]) rotate([90,0,0]) linear_extrude(lr_clip_w)
             polygon([[lr_rb + 0.01, lr_nb - lr_barb_c], [lr_do/2 - lr_barb, lr_nb - lr_barb_c], [lr_rb + 0.01, ntip]]);
     }
+}
+module lr_stops() {
     for (i=[0:lr_clips-1]) rotate(lr_clip_a0 + (i + 0.5)*360/lr_clips)
         translate([lr_do/2 - lr_stop, -lr_stop_w/2, lr_nt]) cube([lr_stop + lr_c + 1.0, lr_stop_w, -wall - lr_nt + 0.01]);
 }
@@ -592,7 +603,27 @@ module plate4() {
         show("diffuser") rotate([180,0,0]) diffuser();
 }
 
+// tassello di prova: porzione della faccia superiore attorno all'encoder con sede del diffusore,
+// ponti, ganci e battute dell'anello LED (per provare scatto dell'anello e del diffusore prima della scocca).
+// Stampato come la scocca: faccia superiore sul piatto.
+tile_r = 26;  tile_depth = 10;
+module test_tile() {
+    rotate([180,0,0]) intersection() {
+        translate([-K.x, -K.y, 0]) rotate([-tilt,0,0]) translate([0,0,-z0]) body();
+        translate([0,0,-tile_depth]) cylinder(r=tile_r, h=tile_depth + 0.01, $fn=120);
+        translate([-(BW/2 - wall - duct_len - 0.05), -50, -50]) cube([2*(BW/2 - wall - duct_len - 0.05), 100, 100]);  // fuori dai condotti dei pannelli
+    }
+}
+
+// piatto 5 "prova" (tolleranze): anelli di prova della sede zigrinata, diffusore, tassello con sede anello LED
+module plate5() {
+    show("test_ring") translate([-50, -45, 0]) test_ring();
+    show("diffuser")  translate([ 50, -45, 0]) rotate([180,0,0]) diffuser();
+    show("test_tile") translate([  0,  25, 0]) test_tile();
+}
+
 module print_layout() {
+    if (plate == 5) plate5();                    // solo esplicito (non nel 0 = tutti)
     if (plate_on(1)) translate([plate==0 && part=="all" ? -190 : 0, 0, 0]) color(c_body) plate1();
     if (plate_on(2)) color(c_base) plate2();
     if (plate_on(3)) translate([plate==0 && part=="all" ? 190 : 0, 0, 0]) color(c_acc) plate3();

@@ -108,3 +108,7 @@ Tutte le misure condivise tra elettronica e scatola, con fonte e affidabilità: 
 ## Sicurezza
 
 Repository pubblico: **nessuna chiave o password** nei file. La chiave API YouTube sta solo nelle impostazioni della PWA sul dispositivo; le credenziali WiFi solo nella memoria del controller.
+
+## Licenza
+
+[MIT](LICENSE) per tutto il progetto: codice (PWA e firmware), modello 3D e documentazione. Su MakerWorld il modello 3D è pubblicato con licenza CC BY 4.0.

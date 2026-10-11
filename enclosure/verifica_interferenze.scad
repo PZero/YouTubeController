@@ -3,7 +3,7 @@
 //  Per ogni chk = 1..15 esporta l'intersezione tra gruppi di pezzi/componenti:
 //    openscad -o chkN.stl -D chk=N verifica_interferenze.scad
 //  Esito atteso: "Current top level object is empty" oppure volume 0 (solo facce a contatto:
-//  chk 4, 7, 8, 14). Eccezione voluta: chk 12 = ~13 mm3 (nervature schiacciabili sul motore vibrazione).
+//  chk 4, 7, 8, 14). Eccezione voluta: chk 12 = ~8 mm3 (nervature schiacciabili sul motore vibrazione).
 //  Gli inviluppi (encoder_env, button_env, led_ring_env, vib_env, mf_env) stanno in componenti.scad.
 // ======================================================================
 include <youtube_control.scad>

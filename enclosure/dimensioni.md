@@ -175,12 +175,12 @@ Coordinate: "piano" = sistema del piano superiore inclinato (x larghezza, s lung
 | Aria cima LED → faccia interna | 1,0 (`lr_air`) | faccia inferiore PCB a n = -7,0 |
 | Distanza LED → diffusore | 3,0 (inserto: ponti 2,0 + aria 1,0); 1,0 in multi-materiale (diffusore pieno da 3) | passo LED ~7,7: la distanza attenua i punti luce, non li elimina |
 | Spessore PCB anello | **da misurare** (modello 1,6) | serve solo alla quota delle battute (`lr_pcb_t`) |
-| Ganci anello | 4, a 45° dall'arco piazzole e poi ogni 90°; braccio 3 x 1,0, lungo 5,6; dente 0,4 sotto il bordo del PCB | gioco radiale 0,25; deformazione ~1,9 % (meglio PETG; in PLA pochi montaggi) |
+| Ganci anello | 4, a 45° dall'arco piazzole e poi ogni 90°; braccio 3 x 0,8 radicato in una tasca profonda fino a 2 dalla faccia superiore (lunghezza libera ~5,1); dente 0,3 sotto il bordo del PCB | gioco radiale 0,25; deformazione ~1,4 % (PLA) |
 | Battute anello | 4, alternate ai ganci; appoggio 0,4 sul bordo esterno (r 22,1-22,5) | i LED arrivano a r ~22 se centrati su 19,5 (affid. B) |
 | Arco piazzole | centrato a 30° (verso destra-retro, `lr_pad_ang`) | i fili scendono sopra la cella, lontano dall'encoder |
 | Diffusore "insert" | anello r 16,65-22,35, spessore 1,0, sottosquadro 0,15 sul bordo esterno (entra a scatto dall'alto); gioco 0,05 per lato | sotto: 4 ponti larghi 2,0 allineati ai ganci reggono il disco centrale dell'encoder |
 | Diffusore "mmu" | corona piena r 16,6-22,4 per tutto lo spessore (3,0), senza ponti | stampato con la scocca (AMS lite), stessa trasformazione |
-| Modulo vibrazione | retro piatto del PCB contro la testata posteriore della culla (Y 29,4); motore verso il retro; 4 nervature schiacciabili (interferenza 0,25); appoggi agli angoli a Z 11; pareti alte fino a Z 23 | sotto (Z 5,8-11) tunnel per il filo + della cella; > 25 mm dall'antenna |
+| Modulo vibrazione | retro piatto del PCB contro la testata posteriore della culla (Y 29,4); motore verso il retro; 4 nervature schiacciabili (interferenza 0,15, PLA); appoggi agli angoli a Z 11; pareti alte fino a Z 23 | sotto (Z 5,8-11) tunnel per il filo + della cella; > 25 mm dall'antenna |
 | Variante vibrazione "a contatto col coperchio" | `vib_top_contact = true`: la parete posteriore sale fino a 0,2 dalla faccia superiore | non attiva di default |
 | Schedina millefori | 20 (X) x 30 (Z) in piedi; componenti verso il davanti max 6,5 (elettrolitico **coricato**), saldature dietro max 2,0; parti alte ~10 (testata JST + spina) solo sopra Z 34,5; nessun componente a meno di 1,5 dai bordi laterali (guide) | spessore PCB 1,6 (C), guide con gioco 0,25 |
 | Vincolo cella | con 18650 protetta (67-70) la culla si allunga di 2-5 mm e la schedina non ci sta più | usare cella non protetta da 65 o rivedere la disposizione |

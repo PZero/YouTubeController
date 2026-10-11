@@ -30,8 +30,8 @@ sm_gap  = 5.0;             // faccia componenti (verso il basso) sopra la piastr
 sm_c    = 0.2;             // gioco PCB / incastri
 sm_end  = 2.5;             // lunghezza degli incastri lungo i lati corti (fuori dalla USB-C e dai pin)
 sm_ledge = 0.7;            // appoggio sotto il PCB (prima dei pad dei pin, X<0.84)
-sm_clip_t = 1.0;           // spessore ganci flessibili (lato USB)
-sm_barb = 0.5;             // dente dei ganci
+sm_clip_t = 0.8;           // spessore ganci flessibili (lato USB); PLA: deformazione ~1.3 % (era ~2.1 %)
+sm_barb = 0.4;             // dente dei ganci
 sm_lip  = 0.6;             // labbro fisso (lato antenna)
 // origine (angolo lato USB / fila 5V) in coordinate scocca: il tasto RST cade su rst_xy
 // scheda capovolta: X scheda -> +Y scocca, Y scheda -> +X scocca
@@ -83,7 +83,7 @@ bat_head_top = bat_zc + ct_h/2 + 0.5;      // quota della cima delle testate
 vib_on  = true;
 vib_w   = 21.0;  vib_h = 23.0;  vib_t = 5.0;     // lato pin (orizzontale, in alto), altezza, spessore max (A)
 vib_c   = 0.2;             // gioco per lato in larghezza; gioco in spessore prima delle nervature
-vib_rib = 0.45;            // nervature schiacciabili sul lato motore (interferenza = vib_rib - vib_c)
+vib_rib = 0.35;            // nervature schiacciabili sul lato motore (interferenza = vib_rib - vib_c = 0.15, PLA)
 vib_rib_x = [-7.5, -2.5, 2.5, 7.5];   // posizione nervature (posizione del motore sul PCB non nota)
 vib_x   = 9.2;             // centro in X: parete destra a ~0.3 dai bracci a scatto dei pannelli (X=21.25)
 vib_z0  = 11.0;            // appoggio del bordo inferiore (sotto: tunnel per il filo + della cella, Z 5.8-11)

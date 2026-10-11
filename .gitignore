@@ -20,3 +20,6 @@ build/
 # Sistema
 Thumbs.db
 .DS_Store
+
+# Esportazioni per la stampa (generate da enclosure/export/esporta.py)
+enclosure/export/out/

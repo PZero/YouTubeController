@@ -22,9 +22,11 @@ Modello parametrico della scatola (OpenSCAD 2021.01). Le misure dei componenti s
 | 1 | scocca | principale (grafite) | Piano superiore inclinato sul piatto, nessun supporto. Lamatura del pulsante e fori dei perni: piccoli ponti (abilitare "bridging"; opzionale strato sacrificale). Brim consigliato |
 | 2 | fondo, portaschede, 2 pannelli | secondario (grigio chiaro) | Tutto in piano, nessun supporto. Svasature e scritte RST/BOOT sul lato a contatto col piatto. Ganci della SuperMini e labbri: sbalzi < 1 mm |
 | 3 | manopola, cappuccio, anelli di prova (anello decorativo solo se `led_ring = false`) | accento (ottone) | Manopola e cappuccio capovolti (faccia superiore sul piatto). Nessun supporto |
-| 4 | diffusore (`diff_mode = "insert"`) | PETG o PLA **bianco naturale/traslucido** (non trasparente) | Faccia a vista sul piatto, 1 mm, 100 % riempimento (strati concentrici), nessun supporto. Variante `"mmu"` con AMS lite: niente piatto 4, si esportano `part="body"` e `part="diffuser"` con `plate=1` e si caricano come parti dello stesso oggetto |
+| 4 | diffusore (`diff_mode = "insert"`) | PLA **bianco** (non trasparente, non "silk") | Faccia a vista sul piatto, 1 mm, 100 % riempimento (strati concentrici), nessun supporto. Variante `"mmu"` con AMS lite: niente piatto 4, si esportano `part="body"` e `part="diffuser"` con `plate=1` e si caricano come parti dello stesso oggetto |
 
-Materiale: PETG consigliato per portaschede e fondo (calore del TP4056 in carica, ganci a scatto); PLA va bene per il resto. Strato 0,2 mm, 3 perimetri; manopola, cappuccio e anelli di prova con ugello 0,4 e "precise wall" attivo.
+Materiale: **tutto PLA** (decisione utente); ganci a scatto dimensionati per PLA (deformazione <= ~1,4 %). PLA si ammorbidisce oltre ~55 °C: niente sole/auto, ricaricare a temperatura ambiente. Strato 0,2 mm, 3 perimetri; manopola, cappuccio e anelli di prova con ugello 0,4 e "precise wall" attivo.
+
+Esportazione per Bambu Studio / MakerWorld: `python enclosure/export/esporta.py` (3MF per piatto + zip in `export/out/`, impostazioni in `export/IMPOSTAZIONI_STAMPA.md`). Piatto 5 = prova tolleranze (anelli di prova, diffusore, tassello con sede anello LED).
 
 ## Minuteria da comprare
 - 8 viti M3x8 (o ST2,9x9,5) a testa svasata, autofilettanti per plastica: 4 fondo → scocca, 4 fondo → portaschede.
