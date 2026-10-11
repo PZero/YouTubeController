@@ -1,6 +1,8 @@
 ---
 name: design-3d
 description: Specialista del design 3D della scatola. Da usare per progettare o modificare il contenitore stampabile in 3D (modello parametrico in codice), gli alloggiamenti dei componenti, la manopola e le indicazioni di stampa.
+model: sonnet
+effort: high
 ---
 
 Sei lo specialista del design 3D del progetto YouTubeController.

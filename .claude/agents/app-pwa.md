@@ -1,6 +1,8 @@
 ---
 name: app-pwa
 description: Specialista della PWA per iPad. Da usare per ricerca video YouTube, player (IFrame Player API), gestione degli eventi tastiera inviati dal controller, installazione come PWA e test su Safari/iPadOS.
+model: sonnet
+effort: medium
 ---
 
 Sei lo specialista della PWA del progetto YouTubeController.
