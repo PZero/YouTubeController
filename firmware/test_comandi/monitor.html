@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor encoder</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2430; --muted: #6b7380; --line: #dde1e7;
+    --led-off: #e3e6eb; --accent: #2563eb; --press: #3c3cff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #12151b; --card: #1b2029; --text: #e6e9ef; --muted: #8b93a1; --line: #2c333f; --led-off: #2a303b; --accent: #5b8cff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 20px; color: var(--muted); }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  button { font: inherit; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #stato { color: var(--muted); }
+  .grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  svg { width: 100%; height: auto; display: block; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .stat .v { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { color: var(--muted); font-size: 13px; }
+  #log { font: 13px/1.5 ui-monospace, Consolas, monospace; height: 260px; overflow-y: auto; margin: 0; white-space: pre-wrap; color: var(--muted); }
+  #knob { transition: transform 80ms linear; transform-origin: 160px 160px; }
+  .note { color: var(--muted); font-size: 13px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Monitor encoder e pulsante</h1>
+  <p class="sub">Legge la seriale dell'ESP32 (Web Serial: apri in Chrome o Edge). L'anello qui imita quello vero.</p>
+
+  <div class="bar">
+    <button class="primary" id="connetti">Collega ESP32</button>
+    <button id="azzera">Azzera</button>
+    <span id="stato">Non collegato</span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <svg viewBox="0 0 320 320" id="vista">
+        <g id="leds"></g>
+        <g id="knob">
+          <circle cx="160" cy="160" r="88" fill="var(--bg)" stroke="var(--line)" stroke-width="3" id="knobBody"/>
+          <line x1="160" y1="160" x2="160" y2="86" stroke="var(--text)" stroke-width="6" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><div class="v" id="pos">0</div><div class="l">posizione (scatti)</div></div>
+        <div class="stat"><div class="v" id="vel">0</div><div class="l">scatti al secondo</div></div>
+        <div class="stat"><div class="v" id="btn">rilasciato</div><div class="l">pulsante</div></div>
+        <div class="stat"><div class="v" id="durata">–</div><div class="l">ultima pressione</div></div>
+      </div>
+      <pre id="log"></pre>
+    </div>
+  </div>
+  <p class="note">Se il PowerShell di Claude sta leggendo la seriale, la porta è occupata: chiudilo prima di collegare.</p>
+</main>
+
+<script>
+const N = 16, CX = 160, CY = 160, R = 130;
+const ledsG = document.getElementById('leds');
+const leds = [];
+for (let i = 0; i < N; i++) {
+  const a = (i / N) * 2 * Math.PI - Math.PI / 2;
+  const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('cx', CX + R * Math.cos(a));
+  c.setAttribute('cy', CY + R * Math.sin(a));
+  c.setAttribute('r', 12);
+  c.setAttribute('fill', 'var(--led-off)');
+  ledsG.appendChild(c);
+  leds.push(c);
+}
+
+let posizione = 0, dir = 1, premuto = false, tempi = [];
+const $ = id => document.getElementById(id);
+const idx = p => ((p % N) + N) % N;
+
+function disegna() {
+  leds.forEach(l => l.setAttribute('fill', 'var(--led-off)'));
+  if (premuto) {
+    leds.forEach(l => l.setAttribute('fill', 'var(--press)'));
+  } else {
+    const col = dir > 0 ? [0, 255, 120] : [255, 90, 0];
+    [2, 1, 0].forEach(k => {
+      const op = [1, 0.35, 0.12][k];
+      leds[idx(posizione - k * dir)].setAttribute('fill', `rgba(${col.join(',')},${op})`);
+    });
+  }
+  $('knob').style.transform = `rotate(${posizione * 18}deg)`;
+  $('knobBody').setAttribute('stroke', premuto ? 'var(--press)' : 'var(--line)');
+  $('pos').textContent = posizione;
+  $('btn').textContent = premuto ? 'PREMUTO' : 'rilasciato';
+}
+
+function aggiornaVelocita() {
+  const ora = performance.now();
+  tempi = tempi.filter(t => ora - t < 1000);
+  $('vel').textContent = tempi.length;
+}
+setInterval(aggiornaVelocita, 200);
+
+function log(riga) {
+  const el = $('log');
+  const t = new Date().toLocaleTimeString('it-IT');
+  el.textContent += `${t}  ${riga}\n`;
+  const righe = el.textContent.split('\n');
+  if (righe.length > 300) el.textContent = righe.slice(-300).join('\n');
+  el.scrollTop = el.scrollHeight;
+}
+
+function gestisci(riga) {
+  const p = riga.trim().split(/\s+/);
+  if (p[0] === 'ENC') {
+    dir = parseInt(p[1], 10);
+    posizione = parseInt(p[2], 10);
+    tempi.push(performance.now());
+    log(`${dir > 0 ? 'AVANTI  ' : 'INDIETRO'}  pos ${posizione}  (transizioni ${p[3]})`);
+  } else if (p[0] === 'BTN') {
+    premuto = p[1] === '1';
+    if (premuto) log('PULSANTE premuto');
+    else { $('durata').textContent = `${p[2]} ms`; log(`PULSANTE rilasciato dopo ${p[2]} ms`); }
+  } else if (riga.trim()) {
+    log(riga.trim());
+  }
+  disegna();
+}
+
+$('azzera').onclick = () => { posizione = 0; $('log').textContent = ''; $('durata').textContent = '–'; disegna(); };
+
+$('connetti').onclick = async () => {
+  if (!('serial' in navigator)) { $('stato').textContent = 'Web Serial non disponibile: usa Chrome o Edge'; return; }
+  try {
+    const porta = await navigator.serial.requestPort({ filters: [{ usbVendorId: 0x303a }] });
+    await porta.open({ baudRate: 115200 });
+    $('stato').textContent = 'Collegato';
+    const lettore = porta.readable.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = '';
+    while (true) {
+      const { value, done } = await lettore.read();
+      if (done) break;
+      buffer += value;
+      let i;
+      while ((i = buffer.indexOf('\n')) >= 0) { gestisci(buffer.slice(0, i)); buffer = buffer.slice(i + 1); }
+    }
+  } catch (e) {
+    $('stato').textContent = 'Errore: ' + e.message;
+  }
+};
+
+disegna();
+</script>
+</body>
+</html>
