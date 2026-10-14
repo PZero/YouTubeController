@@ -3,7 +3,8 @@
 // ======================================================================
 //  PEZZI:
 //   1  body      scocca 105x70 (3:2), piano superiore inclinato, spigoli arrotondati, finestre/condotti di
-//                raffreddamento, fori manopola e pulsante, torrette viti, presa USB-C di ricarica sul retro
+//                raffreddamento, foro manopola, sede RIGIDA del modulo vibrazione sotto la faccia superiore,
+//                torrette viti, presa USB-C di ricarica sul retro
 //   2  lid       fondo, entra nella scocca e si avvita (4x M3); interfaccia FISSA per il portaschede
 //                (4 fori svasati + fori per spillo RST/BOOT)
 //   3  sled      portaschede intercambiabile (file portaschede.scad): ESP32-S3 SuperMini capovolta,
@@ -12,17 +13,16 @@
 //   5  knob      manopola zigrinata (stile ottone), sede a pressione per albero zigrinato 18 denti
 //   6  collar    anello decorativo attorno alla manopola (solo se led_ring = false)
 //   6b diffuser  corona traslucida sopra l'anello LED (filamento bianco; inserto a scatto o multi-materiale)
-//   7  cap       cappuccio del pulsante PBS-110 (calzato sul tasto blu, copre il dado)
 //   8  test_ring anelli di prova della sede zigrinata (3 giochi diversi), da stampare per primi
 //
 //  COMPONENTI PREVISTI (quote in dimensioni.md)
 //   - encoder EC11E (bussola M7x0.75, albero 6 mm zigrinato 18 denti, 20 mm dal piano di appoggio)
-//   - pulsante da pannello PBS-110 (foro 7, dado sul lato esterno, nascosto dal cappuccio)
+//   - (pulsante PBS-110 ELIMINATO il 2026-10-14: play/pausa e gesti col pulsante integrato dell'encoder)
 //   - ESP32-S3 SuperMini, modulo TP4056 USB-C, cella 18650 + contatti a molla/piastrina
 //   - 8x viti M3x8 svasate autofilettanti (4 fondo->scocca, 4 fondo->portaschede)
 //   - 4x viti M2x5 autofilettanti (TP4056)
-//   - anello LED WS2812B 16 LED (sotto la faccia superiore, a scatto); modulo vibrazione e schedina
-//     millefori di interfaccia (sul portaschede, a incastro)
+//   - anello LED WS2812B 16 LED (sotto la faccia superiore, a scatto); modulo vibrazione (sotto la faccia
+//     superiore, davanti all'anello, a incastro sulla scocca); schedina millefori (sul portaschede)
 //
 //  mode  = "print"     -> piatti di stampa (plate = 1/2/3, 0 = tutti affiancati, solo anteprima)
 //          "assembly"  -> tutto montato (controllo incastri)
@@ -32,22 +32,21 @@
 // ======================================================================
 
 mode          = "print";     // "print" | "assembly" | "exploded"
-plate         = 1;           // 1 = scocca | 2 = fondo + portaschede + pannelli | 3 = manopola, cappuccio, test | 4 = diffusore | 5 = prova tolleranze | 0 = tutti
-part          = "all";       // "all" | "body" | "lid" | "sled" | "panel" | "knob" | "collar" | "diffuser" | "cap" | "test_ring" | "test_tile"
+plate         = 1;           // 1 = scocca | 2 = fondo + portaschede | 3 = manopola + 2 pannelli | 4 = diffusore | 5 = prova tolleranze | 0 = tutti
+part          = "all";       // "all" | "body" | "lid" | "sled" | "panel" | "knob" | "collar" | "diffuser" | "test_ring" | "test_tile"
 section_view  = false;       // sezione (solo assembly/exploded)
 cut_x         = 0;           // piano di sezione (si toglie il lato X > cut_x)
 section_shell = false;       // true: la sezione taglia solo scocca e pannelli (interno visibile)
 show_electronics = true;     // componenti (solo assembly/exploded)
 engrave_text  = false;       // scritte incise sulla faccia superiore
-button_glyph  = false;       // simbolo play/pause inciso sul tasto
 fnt           = "Liberation Sans:style=Bold";
 
 $fn = 48;
 
 // colori di anteprima (= filamenti proposti per i piatti)
-c_body = "#34373c";          // piatto 1: scocca (grafite)
-c_base = "#c4c8cc";          // piatto 2: fondo, portaschede, pannelli (grigio chiaro)
-c_acc  = "#c99a2e";          // piatto 3: manopola, anello, cappuccio (ottone)
+c_body = "#1c1c1e";          // piatti 1-2: scocca, fondo, portaschede (PLA NERO)
+c_base = "#1c1c1e";
+c_acc  = "#b87333";          // piatto 3: manopola + pannelli (PLA RAME)
 
 // piatto di stampa (Bambu Lab A1 mini)
 bed      = 180;
@@ -123,10 +122,16 @@ knurl_len  = 7;         // lunghezza zigrinatura dalla punta (da misurare)
 knurl_test = [0.05, 0.10, 0.15];   // giochi provati dal test_ring
 shaft_clear = 6.3;      // tratto liscio dell'albero
 bush_clear  = 7.8;      // passaggio bussola M7 dentro la manopola
-nut_recess_d = 13;  nut_recess_h = 1.2;
+// spinta assiale (pulsante integrato EC11E, ~6 N, corsa 0.5 +-0.3): la manopola poggia sulla punta dell'albero
+// (fondo del foro = punta, nessun gioco) e dado + rondella non devono toccare la manopola a fine corsa
+enc_nut_t = 2.0;  enc_washer_t = 0.5;   // dado M7 e rondella (da misurare)
+enc_travel = 0.8;                       // corsa massima del pulsante (0.5 +0.3)
+bore_slack = 0.0;                       // 0 = il fondo del foro tocca la punta dell'albero
+nut_recess_d = 13;
+nut_recess_h = enc_nut_t + enc_washer_t - knob_gap + enc_travel + 0.5;   // = 2.0: 0.5 di margine a fine corsa
 enc_end    = (enc_bush - wall) + enc_shaft;      // fine albero sopra la faccia superiore
-bore_depth = enc_end - knob_gap + 0.5;
-knob_h     = bore_depth + 2.5;
+bore_depth = enc_end - knob_gap + bore_slack;
+knob_h     = bore_depth + 3.0;
 
 // anello decorativo (collar): usato solo se led_ring = false (al suo posto c'e' il diffusore luminoso)
 ring_ri = 17.3;  ring_ro = 20.5;  ring_h = 1.4;
@@ -137,30 +142,37 @@ pin_hole_d = 2.5;  pin_hole_depth = 2.2;
 tr_d = 12;  tr_h = knurl_len + 2;  tr_pitch = 15;
 
 // ----------------------------------------------------------------------
-//  PULSANTE PLAY/PAUSE  (PBS-110 da pannello + cappuccio stampato)
-//  quote nel sistema del piano superiore: z=0 faccia superiore, z<0 verso l'interno
+//  MODULO VIBRAZIONE SULLA FACCIA SUPERIORE (sede rigida, 2026-10-14)
+//  Dal test su breadboard la vibrazione si sente poco se il modulo e' libero: ora il PCB (21 x 23) sta
+//  con il retro piatto CONTRO la faccia interna della scocca, davanti all'anello LED (zona liberata dal
+//  pulsante PBS-110), tenuto da 2 guide con nervature di pinzatura + 2 ganci a scatto sul piano.
+//  Motore e componenti verso l'interno (max 5 sotto la faccia); lato dei pin (21) verso l'encoder,
+//  con una tacca per i 3 fili. Si infila dal davanti (scivola lungo la pendenza) a scocca capovolta.
+//  Quote nel sistema del piano superiore (z=0 faccia esterna, z=-wall faccia interna, x, s).
 // ----------------------------------------------------------------------
-B          = [-10, -33];   // centro tasto (coordinate sul piano inclinato)
-btn_hole   = 7.2;          // foro pannello (7.0 nominale + gioco FDM)
-btn_cb_d   = 13;           // lamatura esterna per dado + rondella
-btn_cb_h   = 1.2;          // profondita' lamatura (restano wall-btn_cb_h = 1.8 sotto il dado)
-btn_nut_af = 9.5;          // dado: chiave (da misurare)
-btn_nut_t  = 2.0;  btn_washer_t = 0.5;
-btn_key_d  = 6.5;          // diametro tasto blu (da misurare)
-btn_key_above = 4.5;       // sporgenza tasto sopra il dado (da misurare)
-btn_key_fit = 0.10;        // interferenza cappuccio/tasto (foro = btn_key_d - fit)
-btn_travel = 1.0;          // corsa del tasto
-btn_body_d = 9.5;  btn_below = 20;   // ingombro sotto il pannello (corpo + terminali + fili)
-cap_head_d = 16.0;
-cap_gap    = 0.5;          // margine oltre la corsa (bordo cappuccio / faccia, cavita' / dado)
-cap_top_t  = 1.6;
-z_nut_top  = -btn_cb_h + btn_washer_t + btn_nut_t;
-z_key_top  = z_nut_top + btn_key_above;
-cap_z0     = btn_travel + cap_gap;                       // bordo inferiore del cappuccio (a riposo)
-cap_cav_d  = btn_nut_af/cos(30) + 1.2;                   // cavita' sopra il dado
-cap_cav_h  = max(0.6, z_nut_top + btn_travel + cap_gap - cap_z0);
-cap_h      = z_key_top + cap_top_t - cap_z0;
-z_ceil     = -wall;
+vt_w = 21.0;  vt_h = 23.0;  vt_t = 5.0;   // modulo: lato pin (x), altezza (s), spessore max PCB + motore (dimensioni.md, calibro utente, A)
+vt_on     = true;
+vt_back   = -11.0;     // s della faccia del muretto di battuta (lato encoder); anello + ganci a s > -9.7
+vt_pcb_t  = 1.6;       // spessore PCB del modulo: DA MISURARE (se piu' sottile: goccia di colla/biadesivo sottile)
+vt_gc     = 0.2;       // gioco PCB / pareti (x) e battuta (s)
+vt_gz     = 0.2;       // gioco verticale PCB / labbri (prima delle nervature)
+vt_pinch  = 0.15;      // interferenza delle nervature di pinzatura (il PCB e' premuto contro la faccia, PLA)
+vt_lip_t  = 1.0;       // spessore dei labbri
+vt_lip_e  = 1.0;       // quanto il labbro copre il bordo del PCB (componenti a >1.0 dal bordo: da verificare)
+vt_wall   = 1.2;       // spessore pareti laterali e battuta
+vt_tab_l  = 6.0;       // lunghezza di ogni labbro (2 per lato: uno davanti, uno dietro)
+vt_notch_w = 8.0;      // tacca per i fili nella battuta
+// ganci a scatto sul piano (flettono in x): 0.8 x L, dente che tiene il bordo anteriore del PCB
+vt_arm_t  = 0.8;  vt_arm_l = 8.0;  vt_barb = 0.6;  vt_barb_l = 1.5;  vt_arm_gap = 0.3;
+vt_root   = 1.5;       // blocco di radice del gancio
+
+vt_xi  = vt_w/2 + vt_gc;                 // faccia interna delle pareti (|x|)
+vt_sb  = vt_back - vt_wall - vt_gc;       // bordo lato pin del PCB
+vt_sf  = vt_sb - vt_h;                   // bordo anteriore del PCB
+vt_z1  = -wall;                           // faccia interna della scocca
+vt_zp  = vt_z1 - vt_pcb_t;                // faccia inferiore del PCB (a contatto con la faccia)
+vt_zl  = vt_zp - vt_gz;                   // faccia superiore dei labbri
+vt_zb  = vt_zl - vt_lip_t;                // fondo di pareti e labbri
 
 // ----------------------------------------------------------------------
 //  ANELLO LED WS2812B 16 LED + DIFFUSORE (quote: dimensioni.md)
@@ -199,7 +211,7 @@ diff_ro  = 22.4;            // raggio esterno (LED fino a ~22)
 diff_t   = 1.0;             // spessore del diffusore "insert" (0.8-1.2; resta wall-diff_t = 2 di ponti)
 diff_c   = 0.05;            // gioco radiale per lato dell'inserto (0 = pressione)
 diff_snap = 0.15;           // sottosquadro sul bordo esterno: l'inserto entra a scatto dall'alto
-diff_brg_n = 4;  diff_brg_w = 2.0;   // ponti che reggono il disco centrale (solo "insert"), allineati ai ganci
+diff_brg_n = 4;  diff_brg_w = 3.0;   // ponti che reggono il disco centrale con l'encoder (solo "insert"), allineati ai ganci; 3.0 per la spinta del pulsante (2026-10-14)
 c_diff = "#eef0ee";         // colore anteprima (PLA bianco)
 
 // presa cavo (USB-C del TP4056) sul retro.
@@ -310,15 +322,6 @@ module body() {
                 translate([K.x+pin_r*cos(a), K.y+pin_r*sin(a), -pin_hole_depth])
                     cylinder(d=pin_hole_d, h=pin_hole_depth+1, $fn=24);
 
-            // pulsante PBS-110: foro passante + lamatura per il dado + anello inciso
-            translate([B.x, B.y, -wall-1]) cylinder(d=btn_hole, h=wall+2);
-            if (btn_cb_h > 0)
-                translate([B.x, B.y, -btn_cb_h]) cylinder(d=btn_cb_d, h=btn_cb_h+1, $fn=64);
-            translate([B.x, B.y, -0.6]) difference() {
-                cylinder(d=24.4, h=1);
-                translate([0,0,-0.1]) cylinder(d=22.8, h=1.2);
-            }
-
             // scritte
             if (engrave_text)
                 translate([0,0,-0.4]) linear_extrude(0.5) top_text();
@@ -330,6 +333,8 @@ module body() {
     }
     // bracci a scatto dell'anello LED (radicati nel fondo delle tasche)
     if (led_ring) top_frame() translate([K.x, K.y, 0]) lr_arms();
+    // sede rigida del modulo vibrazione
+    if (vt_on) top_frame() vt_nest();
   }
 }
 
@@ -347,8 +352,7 @@ module arc_text(s, r, size, a0, c) {
 module top_text() {
     arc_text("YOYO CONTROL", 23.4, 2.6, 90, K);
     translate([K.x+6,  K.y-23.5]) text("<< SEEK >>", size=2.6, halign="center", valign="center", font=fnt);
-    translate([B.x,    B.y+14.5]) text("SELECT",     size=2.6, halign="center", valign="center", font=fnt);
-    translate([B.x+14.5, B.y])    text("PLAY/PAUSE", size=2.4, halign="left",   valign="center", font=fnt);
+    translate([0, -27]) text("PUSH = PLAY / PAUSE", size=2.6, halign="center", valign="center", font=fnt);
 }
 
 // ======================================================================
@@ -444,7 +448,7 @@ module knob() {
         translate([0,0,kz0]) linear_extrude(bore_depth - kz0) knurl2d(knurl_fit);
         // alloggio dado encoder + passaggio bussola
         translate([0,0,-0.01]) cylinder(d=nut_recess_d, h=nut_recess_h, $fn=64);
-        translate([0,0,-0.01]) cylinder(d=bush_clear, h=enc_bush - wall - knob_gap + 0.6, $fn=48);
+        translate([0,0,-0.01]) cylinder(d=bush_clear, h=enc_bush - wall - knob_gap + enc_travel + 0.6, $fn=48);   // passaggio bussola: libero anche a fine corsa del pulsante
         // incisioni sul top: anelli concentrici + indicatore
         translate([0,0,knob_h-0.4]) linear_extrude(0.5) {
             for (r=[5,8.5,12]) difference() { circle(r=r+0.25); circle(r=r-0.25); }
@@ -542,25 +546,32 @@ module lr_stops() {
 }
 
 // ======================================================================
-//  6) CAPPUCCIO PULSANTE (z=0 = bordo inferiore; calza sul tasto blu del PBS-110)
+//  6) SEDE MODULO VIBRAZIONE (sistema del piano superiore; solo materiale AGGIUNTO alla scocca)
 // ======================================================================
-module cap() {
+module vt_nest() {
+    xo = vt_xi + vt_wall;
+    // pareti laterali e battuta (con tacca fili: lascia 1.0 di materiale sotto la faccia)
+    for (sx = [-1, 1]) translate([sx > 0 ? vt_xi : -xo, vt_sf, vt_zb]) cube([vt_wall, vt_back - vt_sf, vt_z1 - vt_zb + 0.01]);
     difference() {
-        rotate_extrude($fn=96)
-            polygon([[0,0],[cap_head_d/2,0],[cap_head_d/2,cap_h-0.8],
-                     [cap_head_d/2-0.8,cap_h],[0,cap_h]]);
-        // cavita' sopra dado e rondella
-        translate([0,0,-0.01]) cylinder(d=cap_cav_d, h=cap_cav_h+0.01, $fn=64);
-        // sede del tasto (a pressione)
-        translate([0,0,cap_cav_h-0.01]) cylinder(d=btn_key_d-btn_key_fit, h=z_key_top-cap_z0-cap_cav_h+0.01, $fn=48);
-        translate([0,0,cap_h-0.4]) linear_extrude(0.5) {
-            difference() { circle(r=6.05, $fn=96); circle(r=5.55, $fn=96); }
-            if (button_glyph) {
-                polygon([[-5.2*0.5-1.6,-2.6],[-5.2*0.5-1.6,2.6],[-0.2,0]]);
-                translate([1.0,-2.6]) square([1.1,5.2]);
-                translate([3.0,-2.6]) square([1.1,5.2]);
-            }
-        }
+        translate([-xo, vt_back - vt_wall, vt_zb]) cube([2*xo, vt_wall, vt_z1 - vt_zb + 0.01]);
+        translate([-vt_notch_w/2, vt_back - vt_wall - 1, vt_zb - 1]) cube([vt_notch_w, vt_wall + 2, vt_z1 - 1.0 - vt_zb + 1]);
+    }
+    // labbri sotto i bordi del PCB (2 per lato) con rampa d'invito che pinza il PCB contro la faccia
+    for (sx = [-1, 1], s0 = [vt_sb - 1 - vt_tab_l, vt_sf + 1]) {
+        xa = vt_w/2 - vt_lip_e;
+        translate([sx > 0 ? xa : -xo, s0, vt_zb]) cube([xo - xa, vt_tab_l, vt_lip_t]);
+        // nervatura (rampa) sulla faccia superiore del labbro: sale di vt_gz + vt_pinch
+        translate([sx > 0 ? xa : -(vt_w/2), s0, 0]) rotate([90,0,90]) linear_extrude(vt_lip_e)
+            polygon([[0, vt_zl - 0.01], [1.5, vt_zl + vt_gz + vt_pinch], [vt_tab_l, vt_zl + vt_gz + vt_pinch], [vt_tab_l, vt_zl - 0.01]]);
+    }
+    // ganci a scatto sul piano (davanti al PCB), uno per lato
+    for (m = [0, 1]) mirror([m, 0, 0]) {
+        tip = vt_sf - vt_arm_gap;                 // faccia di arresto del dente
+        a0 = tip - vt_arm_l;
+        translate([vt_xi, a0, vt_zb]) cube([vt_arm_t, vt_arm_l, vt_z1 - vt_zb + 0.01]);                       // braccio
+        translate([vt_xi, a0 - vt_root, vt_zb]) cube([vt_arm_t + 1.2, vt_root + 0.01, vt_z1 - vt_zb + 0.01]);  // radice
+        translate([0, 0, vt_zb]) linear_extrude(vt_z1 - vt_zb + 0.01)                                         // dente (rampa verso -s)
+            polygon([[vt_xi + 0.01, tip], [vt_xi - vt_barb, tip], [vt_xi + 0.01, tip - vt_barb_l]]);
     }
 }
 
@@ -579,25 +590,23 @@ module plate1() {
         show("diffuser") color(c_diff) plate1_frame() top_frame() translate([K.x, K.y, 0]) diffuser();
 }
 
-// piatto 2: fondo (faccia esterna sotto), portaschede (piastra sotto), 2 pannelli (faccia esterna sotto)
+// piatto 2 (NERO): fondo (faccia esterna sotto) e portaschede (piastra sotto)
 module plate2() {
-    show("lid")   translate([-35, 20, 0]) lid();
-    show("sled")  translate([ 35, 20, -lid_t]) sled();
+    show("lid")   translate([-35, 0, 0]) lid();
+    show("sled")  translate([ 35, 0, -lid_t]) sled();
+}
+
+// piatto 3 (RAME, accento): manopola capovolta e 2 pannelli laterali (faccia esterna sotto)
+module plate3() {
+    show("knob")      translate([0, 28, knob_h]) rotate([180,0,0]) knob();
+    if (!led_ring) show("collar") translate([ 50, 28, ring_h]) rotate([180,0,0]) collar();
     show("panel") {
-        translate([-35, -68, 0]) panel_local();
-        translate([ 35, -68, 0]) panel_local();
+        translate([-35, -40, 0]) panel_local();
+        translate([ 35, -40, 0]) panel_local();
     }
 }
 
-// piatto 3 (colore accento): manopola e cappuccio capovolti, anello capovolto, anelli di prova
-module plate3() {
-    show("knob")      translate([-25, 18, knob_h]) rotate([180,0,0]) knob();
-    if (!led_ring) show("collar") translate([ 25, 18, ring_h]) rotate([180,0,0]) collar();
-    show("cap")       translate([-25,-22, cap_h]) rotate([180,0,0]) cap();
-    show("test_ring") translate([  5,-22, 0]) test_ring();
-}
-
-// piatto 4 (filamento bianco/naturale): diffusore "insert", faccia a vista sul piatto
+// piatto 4 (PLA BIANCO, solo per il diffusore): diffusore "insert", faccia a vista sul piatto
 module plate4() {
     if (led_ring && diff_mode == "insert")
         show("diffuser") rotate([180,0,0]) diffuser();
@@ -652,12 +661,11 @@ module assembly(ex) {
             color(c_acc) show("knob")   translate([K.x,K.y,knob_gap+1.6*ex]) knob();
             if (!led_ring) color(c_acc) show("collar") translate([K.x,K.y,0.8*ex]) collar();
             if (led_ring) color(c_diff) show("diffuser") translate([K.x,K.y,0.8*ex]) diffuser();
-            color(c_acc) show("cap")    translate([B.x,B.y,cap_z0+1.2*ex]) cap();
         }
         if (show_electronics && part=="all") {
             translate([0,0,e_body]) top_frame() {
                 translate([K.x,K.y,-3.2*ex]) encoder_model(ex > 0);
-                translate([B.x,B.y,-3.2*ex]) button_model(ex > 0);
+                if (vt_on) translate([0,0,-1.6*ex]) vib_top_model();
                 if (led_ring) translate([K.x,K.y,-2.4*ex]) led_ring_model();
             }
             translate([0,0,e_sled]) sled_electronics();

@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor controller</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2430; --muted: #6b7380; --line: #dde1e7;
+    --led-off: #e3e6eb; --accent: #2563eb; --press: #3c3cff;
+    --ok: #15803d; --warn: #b45309; --err: #c62828; --hl: #fff3c4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #12151b; --card: #1b2029; --text: #e6e9ef; --muted: #8b93a1; --line: #2c333f; --led-off: #2a303b; --accent: #5b8cff;
+            --ok: #4ade80; --warn: #fbbf24; --err: #ff6b6b; --hl: #3a3320; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
+  p.sub { margin: 0 0 20px; color: var(--muted); }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  button, input[type=text] { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  button { cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #stato { color: var(--muted); }
+  .grid { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid, .grid2 { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  svg { width: 100%; height: auto; display: block; }
+  .big { font-size: 34px; font-weight: 700; letter-spacing: .02em; }
+  .det { color: var(--muted); font-size: 13px; min-height: 18px; }
+  .flash { transition: background-color 400ms; }
+  .flash.on { background: var(--hl); transition: none; }
+  .gesto-BREVE { color: var(--accent); } .gesto-MEDIA { color: var(--warn); } .gesto-LUNGA { color: var(--err); }
+  .gesto-OTA { color: #9333ea; } .gesto-RESET_WIFI { color: var(--err); } .gesto-ANNULLATO { color: var(--muted); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; vertical-align: middle; }
+  .b-ok { color: var(--ok); } .b-warn { color: var(--warn); } .b-err { color: var(--err); } .b-off { color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  @media (max-width: 760px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat .v { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat .l { color: var(--muted); font-size: 13px; }
+  table.st { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.st td { padding: 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.st td:first-child { color: var(--muted); width: 90px; }
+  a { color: var(--accent); word-break: break-all; }
+  .filtri { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-bottom: 10px; font-size: 13px; }
+  .filtri label { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); }
+  #log { font: 13px/1.5 ui-monospace, Consolas, monospace; height: 320px; overflow-y: auto; margin: 0; white-space: pre-wrap; color: var(--muted); }
+  #log .GESTO { color: var(--text); font-weight: 600; } #log .TASTO { color: var(--accent); }
+  #log .ERRORE, #log .err { color: var(--err); } #log .OTA, #log .PORTALE, #log .WIFI, #log .BLE { color: var(--ok); }
+  #knob { transition: transform 80ms linear; transform-origin: 150px 150px; }
+  .note { color: var(--muted); font-size: 13px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Monitor del controller</h1>
+  <p class="sub">Legge la seriale dell'ESP32 (Web Serial: Chrome o Edge). Mostra gesti, tasti inviati all'iPad e stato di BLE, WiFi, portale e OTA.</p>
+
+  <div class="bar">
+    <button class="primary" id="connetti">Collega ESP32</button>
+    <button id="azzera">Azzera</button>
+    <span id="stato">Non collegato</span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <svg viewBox="0 0 300 300">
+        <g id="leds"></g>
+        <g id="knob">
+          <circle cx="150" cy="150" r="82" fill="var(--bg)" stroke="var(--line)" stroke-width="3" id="knobBody"/>
+          <line x1="150" y1="150" x2="150" y2="80" stroke="var(--text)" stroke-width="6" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+    <div class="col">
+      <div class="grid2">
+        <div class="card flash" id="cardGesto">
+          <h2>Ultimo gesto</h2>
+          <div class="big" id="gesto">–</div>
+          <div class="det" id="gestoDet"></div>
+        </div>
+        <div class="card flash" id="cardTasto">
+          <h2>Tasto all'iPad</h2>
+          <div class="big" id="tasto">–</div>
+          <div class="det" id="tastoDet"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><div class="v" id="pos">0</div><div class="l">posizione (scatti)</div></div>
+          <div class="stat"><div class="v" id="vel">0</div><div class="l">scatti/s</div></div>
+          <div class="stat"><div class="v" id="liv">–</div><div class="l">livello velocità</div></div>
+          <div class="stat"><div class="v" id="btn">su</div><div class="l">pulsante</div></div>
+          <div class="stat"><div class="v" id="durata">–</div><div class="l">ultima pressione</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:16px">
+    <div class="card">
+      <h2>Stato</h2>
+      <table class="st">
+        <tr><td>Firmware</td><td id="fw">–</td></tr>
+        <tr><td>BLE</td><td id="ble"><span class="badge b-off">sconosciuto</span></td></tr>
+        <tr><td>WiFi</td><td id="wifi"><span class="badge b-off">spento</span></td></tr>
+        <tr><td>Portale</td><td id="portale"><span class="badge b-off">chiuso</span></td></tr>
+        <tr><td>OTA</td><td id="ota"><span class="badge b-off">inattivo</span></td></tr>
+        <tr><td>Vivo</td><td id="vivo">–</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>Registro</h2>
+      <div class="filtri" id="filtri">
+        <input type="text" id="cerca" placeholder="filtra testo..." style="flex:1;min-width:140px">
+      </div>
+      <pre id="log"></pre>
+    </div>
+  </div>
+  <p class="note">Chiudi questa pagina (o scollega) prima di caricare un nuovo firmware: tiene occupata la porta COM.</p>
+</main>
+
+<script>
+const N = 16, CX = 150, CY = 150, R = 122;
+const $ = id => document.getElementById(id);
+const leds = [];
+for (let i = 0; i < N; i++) {
+  const a = (i / N) * 2 * Math.PI - Math.PI / 2;
+  const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('cx', CX + R * Math.cos(a)); c.setAttribute('cy', CY + R * Math.sin(a));
+  c.setAttribute('r', 11); c.setAttribute('fill', 'var(--led-off)');
+  $('leds').appendChild(c); leds.push(c);
+}
+
+const PREFISSI = ['ENC', 'BTN', 'GESTO', 'TASTO', 'BLE', 'WIFI', 'PORTALE', 'OTA', 'INFO', 'ERRORE', 'VIVO', 'ALTRO'];
+const attivi = new Set(PREFISSI.filter(p => p !== 'VIVO'));
+PREFISSI.forEach(p => {
+  const l = document.createElement('label');
+  l.innerHTML = `<input type="checkbox" ${attivi.has(p) ? 'checked' : ''}> ${p}`;
+  l.querySelector('input').onchange = e => { e.target.checked ? attivi.add(p) : attivi.delete(p); rendiLog(); };
+  $('filtri').appendChild(l);
+});
+$('cerca').oninput = rendiLog;
+
+let posizione = 0, dir = 1, livello = 1, premuto = false, tempi = [], righe = [], ultimaScia = 0;
+const idx = p => ((p % N) + N) % N;
+const COL = { 1: [0, 200, 255], 2: [255, 200, 0], 3: [255, 90, 0] };
+
+function disegna() {
+  leds.forEach(l => l.setAttribute('fill', 'var(--led-off)'));
+  if (premuto) leds.forEach(l => l.setAttribute('fill', 'var(--press)'));
+  else if (performance.now() - ultimaScia < 400) {
+    const c = COL[livello] || COL[1];
+    [3, 2, 1, 0].forEach(k => leds[idx(posizione - k * dir)].setAttribute('fill', `rgba(${c.join(',')},${[1, .4, .18, .08][k]})`));
+  }
+  $('knob').style.transform = `rotate(${posizione * 18}deg)`;
+  $('knobBody').setAttribute('stroke', premuto ? 'var(--press)' : 'var(--line)');
+  $('pos').textContent = posizione;
+  $('btn').textContent = premuto ? 'GIÙ' : 'su';
+}
+setInterval(() => {
+  const ora = performance.now();
+  tempi = tempi.filter(t => ora - t < 1000);
+  $('vel').textContent = tempi.length;
+  disegna();
+}, 100);
+
+function evidenzia(id) {
+  const el = $(id);
+  el.classList.add('on');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('on'), 2000);
+}
+
+const badge = (testo, cls) => `<span class="badge ${cls}">${testo}</span>`;
+const link = u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`;
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function prefisso(r) { const p = r.split(' ')[0]; return PREFISSI.includes(p) ? p : 'ALTRO'; }
+function visibile(r) {
+  const q = $('cerca').value.trim().toLowerCase();
+  return attivi.has(r.p) && (!q || r.t.toLowerCase().includes(q));
+}
+function rigaHtml(r) {
+  const cls = r.p + (/ERRORE/.test(r.t) ? ' err' : '');
+  return `<span class="${cls}">${r.ora}  ${esc(r.t)}</span>\n`;
+}
+function rendiLog() {
+  $('log').innerHTML = righe.filter(visibile).slice(-500).map(rigaHtml).join('');
+  $('log').scrollTop = $('log').scrollHeight;
+}
+function log(t) {
+  const r = { ora: new Date().toLocaleTimeString('it-IT'), t, p: prefisso(t) };
+  righe.push(r);
+  if (righe.length > 3000) righe = righe.slice(-2000);
+  if (visibile(r)) {
+    const el = $('log');
+    const inFondo = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
+    el.insertAdjacentHTML('beforeend', rigaHtml(r));
+    if (el.childElementCount > 600) el.firstElementChild.remove();
+    if (inFondo) el.scrollTop = el.scrollHeight;
+  }
+}
+
+const NOMI_GESTO = { BREVE: 'Breve', MEDIA: 'Media', LUNGA: 'Lunga', OTA: 'Aggiornamento', RESET_WIFI: 'Azzera WiFi', ANNULLATO: 'Annullato' };
+const DESC_GESTO = { BREVE: 'play / pausa (Spazio)', MEDIA: 'loop A-B (L)', LUNGA: 'standby (simulato)', OTA: 'premuto + 5 scatti avanti', RESET_WIFI: 'premuto + 5 scatti indietro', ANNULLATO: '' };
+
+function gestisci(riga) {
+  const t = riga.trim();
+  if (!t) return;
+  const p = t.split(/\s+/);
+  switch (p[0]) {
+    case 'ENC':
+      dir = parseInt(p[1], 10); posizione = parseInt(p[2], 10);
+      const lv = parseInt(p[3], 10);
+      if (lv > 0) { livello = lv; $('liv').textContent = ['', 'lento', 'medio', 'veloce'][lv] || lv; ultimaScia = performance.now(); }
+      tempi.push(performance.now());
+      break;
+    case 'BTN':
+      premuto = p[1] === '1';
+      if (!premuto) $('durata').textContent = `${p[2]} ms`;
+      break;
+    case 'GESTO': {
+      const g = p[1];
+      $('gesto').textContent = NOMI_GESTO[g] || g;
+      $('gesto').className = 'big gesto-' + g;
+      $('gestoDet').textContent = [DESC_GESTO[g], p.slice(2).join(' ')].filter(Boolean).join(' · ');
+      evidenzia('cardGesto');
+      break;
+    }
+    case 'TASTO': {
+      $('tasto').textContent = p[1].replace('Sinistra', '←').replace('Destra', '→');
+      const ok = p[2] === 'INVIATO';
+      $('tastoDet').innerHTML = (ok ? badge('inviato', 'b-ok') : badge('non collegato: solo log', 'b-warn')) + (p[3] ? ` &nbsp;in coda: ${p[3]}` : '');
+      evidenzia('cardTasto');
+      break;
+    }
+    case 'BLE':
+      if (p[1] === 'CONNESSO') $('ble').innerHTML = badge('connesso', 'b-ok');
+      else if (p[1] === 'DISCONNESSO') $('ble').innerHTML = badge('disconnesso', 'b-warn');
+      else if (p[1] === 'PUBBLICITA') $('ble').innerHTML = badge('in attesa', 'b-warn') + ` ${esc(p.slice(2).join(' '))}`;
+      else if (p[1] === 'SOSPESO') $('ble').innerHTML = badge('sospeso (WiFi)', 'b-off');
+      break;
+    case 'WIFI':
+      if (p[1] === 'CONNESSO') $('wifi').innerHTML = badge('connesso', 'b-ok') + ` ${p[2]} (${p[3]} dBm)`;
+      else if (p[1] === 'CONNESSIONE') $('wifi').innerHTML = badge('connessione...', 'b-warn') + ` ${esc(p.slice(2).join(' '))}`;
+      else if (p[1] === 'ERRORE') $('wifi').innerHTML = badge('errore', 'b-err') + ` ${esc(p.slice(2).join(' '))}`;
+      else if (p[1] === 'SPENTO') $('wifi').innerHTML = badge('spento', 'b-off') + ` ${p[2] === 'configurato' ? 'casa configurata' : 'casa non configurata'}`;
+      else if (p[1] === 'AZZERATO') $('wifi').innerHTML = badge('azzerato', 'b-warn');
+      else if (p[1] === 'NON_CONFIGURATO') $('wifi').innerHTML = badge('non configurato', 'b-warn');
+      else if (p[1] === 'SALVATO') $('wifi').innerHTML = badge('salvato', 'b-ok') + ` ${esc(p.slice(2).join(' '))}`;
+      break;
+    case 'PORTALE':
+      if (p[1] === 'APERTO') $('portale').innerHTML = badge('aperto', 'b-ok') + ` rete <b>${esc(p.slice(4).join(' '))}</b><br>${link(p[2])}`;
+      else if (p[1] === 'CHIUSO') $('portale').innerHTML = badge('chiuso', 'b-off');
+      break;
+    case 'OTA':
+      if (p[1] === 'INGRESSO') $('ota').innerHTML = badge('ingresso', 'b-warn');
+      else if (p[1] === 'PRONTO') $('ota').innerHTML = badge('pronto', 'b-ok') + `<br>${link(p[2])}<br>${link(p[2] + 'update')}${p[3] ? '<br>' + link(p[3]) : ''}`;
+      else if (p[1] === 'SCARICO' || p[1] === 'CARICAMENTO') $('ota').innerHTML = badge(`${p[1].toLowerCase()} ${p[2]}%`, 'b-warn');
+      else if (p[1] === 'RIUSCITO' || p[1] === 'CONVALIDATA') $('ota').innerHTML = badge(p[1].toLowerCase(), 'b-ok');
+      else if (p[1] === 'NESSUN_AGGIORNAMENTO') $('ota').innerHTML = badge('nessun aggiornamento', 'b-off');
+      else if (p[1] === 'ERRORE') $('ota').innerHTML = badge('errore', 'b-err') + ` ${esc(p.slice(2).join(' '))}`;
+      else if (p[1] === 'USCITA') { $('ota').innerHTML = badge('uscita: ' + (p[2] || ''), 'b-off'); }
+      break;
+    case 'INFO':
+      if (p[1] === 'YTController') { $('fw').textContent = `${p[2]} · ${p.slice(3).join(' ')}`; }
+      if (p[1] === 'riavvio') ['wifi', 'portale', 'ota'].forEach(id => $(id).innerHTML = badge('riavvio...', 'b-off'));
+      break;
+    case 'VIVO':
+      $('vivo').textContent = `${p[1]} s · non valide ${p[2]} · heap ${p[3]} KB`;
+      break;
+  }
+  log(t);
+}
+
+$('azzera').onclick = () => { posizione = 0; righe = []; $('log').innerHTML = ''; $('durata').textContent = '–'; disegna(); };
+
+$('connetti').onclick = async () => {
+  if (!('serial' in navigator)) { $('stato').textContent = 'Web Serial non disponibile: usa Chrome o Edge'; return; }
+  try {
+    const porta = await navigator.serial.requestPort({ filters: [{ usbVendorId: 0x303a }] });
+    await porta.open({ baudRate: 115200 });
+    $('stato').textContent = 'Collegato';
+    const lettore = porta.readable.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = '';
+    while (true) {
+      const { value, done } = await lettore.read();
+      if (done) break;
+      buffer += value;
+      let i;
+      while ((i = buffer.indexOf('\n')) >= 0) { gestisci(buffer.slice(0, i)); buffer = buffer.slice(i + 1); }
+    }
+  } catch (e) {
+    $('stato').textContent = 'Errore: ' + e.message + ' (dopo un riavvio del controller: ricollega)';
+  }
+};
+
+disegna();
+</script>
+</body>
+</html>

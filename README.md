@@ -1,9 +1,9 @@
 # YouTubeController
 
-Controller fisico per YouTube su iPad: **una manopola e un pulsante** in una scatola stampata in 3D, collegati via Bluetooth a una **PWA** che cerca e riproduce i video.
+Controller fisico per YouTube su iPad: **una sola manopola, che si gira e si preme**, in una scatola stampata in 3D, collegati via Bluetooth a una **PWA** che cerca e riproduce i video.
 
 - **Manopola**: avanti / indietro nel video, con passo che dipende dalla velocità di rotazione (fine / medio / veloce).
-- **Pulsante**: play / pausa; pressione media per il loop A-B tra due punti del video.
+- **Pressione della manopola**: play / pausa; pressione media per il loop A-B tra due punti del video.
 - **Anello di luce** attorno alla manopola e **vibrazione** per confermare i comandi senza guardare.
 
 ![Controller montato](docs/render/render_montato.png)
@@ -64,7 +64,7 @@ Riferimento unico: [`app/js/keymap.js`](app/js/keymap.js).
 |---|---|
 | ESP32-S3 SuperMini | BLE HID tastiera, WiFi per gli aggiornamenti OTA |
 | Encoder EC11 con albero zigrinato | manopola |
-| Pulsante da pannello PBS-110 | play / pausa, loop, gesti |
+| Pulsante integrato nell'encoder | play / pausa, loop, gesti |
 | Modulo TP4056 USB-C con protezione | ricarica (0,5 A) della 18650 |
 | Batteria Li-ion 18650 | alimentazione |
 | Anello WS2812B 16 LED (Ø45/Ø33) | alone di luce attorno alla manopola |

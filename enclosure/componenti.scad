@@ -35,23 +35,15 @@ module encoder_env() {
     translate([-8.5, -enc_body.y/2, -wall-enc_body_h-enc_pin_h-3]) cube([17, enc_body.y, enc_pin_h+3]);
 }
 
-// pulsante PBS-110 (sistema locale del piano superiore, origine sull'asse alla faccia superiore)
-module button_model(exploded=false) {
-    color(c_black) translate([0,0,-wall-btn_below+5]) cylinder(d=btn_body_d, h=btn_below-5-0.02, $fn=40);
-    color(c_metal) {
-        translate([0,0,-wall-1]) cylinder(d=6.9, h=wall+1+z_nut_top+0.6, $fn=32);         // bussola filettata
-        translate([0,0,-btn_cb_h + (exploded ? 6 : 0)]) {
-            cylinder(d=11, h=btn_washer_t, $fn=40);                                       // rondella
-            translate([0,0,btn_washer_t]) cylinder(d=btn_nut_af/cos(30), h=btn_nut_t, $fn=6); // dado
-        }
-        for (s=[-1,1]) translate([s*2.2-0.2, -1.4, -wall-btn_below]) cube([0.4, 2.8, 5.1]); // terminali
-    }
-    color(c_key) translate([0,0,z_nut_top]) cylinder(d=btn_key_d, h=btn_key_above, $fn=32);  // tasto blu
+// modulo vibrazione sulla faccia superiore (sistema del piano superiore, origine su x=0, s=0, z=0 faccia esterna)
+// PCB con il retro piatto contro la faccia interna; motore e componenti verso l'interno; pin verso l'encoder (+s)
+module vib_top_model() {
+    color(c_green) translate([-vt_w/2, vt_sf, vt_zp]) cube([vt_w, vt_h, vt_pcb_t]);
+    color(c_metal) translate([0, vt_sf + vt_h/2, vt_zp - (vt_t - vt_pcb_t)]) cylinder(d=10, h=vt_t - vt_pcb_t, $fn=40);
+    color(c_chip) translate([-8, vt_sb - 6, vt_zp - 1.2]) cube([3, 3, 1.2]);
 }
-module button_env() {
-    translate([0,0,-wall-btn_below]) cylinder(d=12, h=btn_below-0.01);  // corpo + terminali + fili
-    translate([0,0,-wall-1]) cylinder(d=6.9, h=wall+1+z_nut_top);
-}
+module vib_top_env() translate([-vt_w/2, vt_sf, vt_zp - (vt_t - vt_pcb_t)]) cube([vt_w, vt_h, vt_t]);
+module vib_top_pcb() translate([-vt_w/2, vt_sf, vt_zp]) cube([vt_w, vt_h, vt_pcb_t]);   // solo il PCB (senza motore e componenti)
 
 // ESP32-S3 SuperMini (coordinate scheda, Z>0 = lato componenti)
 module supermini_model() {
@@ -130,13 +122,13 @@ module led_ring_env() {
     }
 }
 
-// modulo vibrazione (coordinate scocca): PCB in piedi contro la culla, motore verso il retro
+// [VARIANTE SCARTATA 2026-10-14, vib_on = false] modulo vibrazione sul portaschede: PCB in piedi contro la culla
 module vib_model() {
-    color(c_green) translate([vib_x - vib_w/2, vib_y0, vib_z0]) cube([vib_w, 1.6, vib_h]);
-    color(c_metal) translate([vib_x, vib_y0 + 1.6, vib_z0 + vib_h/2]) rotate([-90,0,0]) cylinder(d=10, h=vib_t - 1.6, $fn=40);
-    color(c_chip) translate([vib_x - 8, vib_y0 + 1.6, vib_z0 + vib_h - 6]) cube([3, 1.2, 3]);
+    color(c_green) translate([vib_x - vt_w/2, vib_y0, vib_z0]) cube([vt_w, 1.6, vt_h]);
+    color(c_metal) translate([vib_x, vib_y0 + 1.6, vib_z0 + vt_h/2]) rotate([-90,0,0]) cylinder(d=10, h=vib_t - 1.6, $fn=40);
+    color(c_chip) translate([vib_x - 8, vib_y0 + 1.6, vib_z0 + vt_h - 6]) cube([3, 1.2, 3]);
 }
-module vib_env() translate([vib_x - vib_w/2, vib_y0, vib_z0]) cube([vib_w, vib_t, vib_h]);
+module vib_env() translate([vib_x - vt_w/2, vib_y0, vib_z0]) cube([vt_w, vib_t, vt_h]);
 
 // schedina millefori (coordinate scocca) con testata JST-PH (da definire: 3 o 8 poli)
 jst_n = 8;                                 // poli della testata sulla schedina (3 = solo anello; 8 = tutto il coperchio)

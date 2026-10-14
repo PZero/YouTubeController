@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Esporta i piatti di stampa (Bambu Lab A1 mini, 180 x 180) in 3MF e prepara gli zip.
+"""Esporta i piatti di stampa (Bambu Lab A1 mini, 180 x 180, senza AMS: un colore per piatto)
+in 3MF e prepara il pacchetto zip per la stampa.
 
 Uso (dalla radice del repo o da qualsiasi cartella):
-    python enclosure/export/esporta.py            # tutto
+    python enclosure/export/esporta.py            # tutto (3MF in out/, zip in enclosure/export/)
     python enclosure/export/esporta.py --solo-prova
+    python enclosure/export/esporta.py --solo 05 03   # rigenera solo i piatti indicati (prefisso del file) e ricompone lo zip
 
 Richiede solo OpenSCAD (riga di comando) e la libreria standard di Python.
-I file generati vanno in enclosure/export/out/ (esclusa da git).
+I 3MF intermedi vanno in enclosure/export/out/ (esclusa da git); lo zip finale in enclosure/export/.
+Il LEGGIMI.md dello zip viene generato qui, con pesi e lunghezze di filamento calcolati dai volumi.
 """
 import argparse
+import math
 import os
 import re
 import shutil
@@ -22,17 +26,31 @@ ENCLOSURE = QUI.parent
 REPO = ENCLOSURE.parent
 SCAD = ENCLOSURE / "youtube_control.scad"
 OUT = QUI / "out"
+ZIP_STAMPA = QUI / "YouTubeController_stampa_A1mini.zip"
 BED = 180.0          # piatto A1 mini
 MARGINE = 5.0        # margine minimo dal bordo del piatto
 PLA_DENS = 1.24      # g/cm3
+FIL_D = 1.75         # mm
+G_PER_M = PLA_DENS * math.pi * (FIL_D / 20) ** 2 * 100   # g per metro di filamento (~2,98)
 
-# nome file, numero di "plate" in youtube_control.scad, descrizione, insieme
+# ordine = ordine di stampa consigliato. Un colore per piatto (senza AMS).
+# file, plate in youtube_control.scad, colore, descrizione, gruppo, strato, pareti, riempimento, brim, nota di orientamento
 PIATTI = [
-    ("00_prova_tolleranze", 5, "anelli di prova sede zigrinata + diffusore + tassello con sede anello LED", "prova"),
-    ("01_scocca",           1, "scocca (faccia superiore sul piatto)", "completo"),
-    ("02_fondo_portaschede_pannelli", 2, "fondo, portaschede, 2 pannelli laterali", "completo"),
-    ("03_manopola_cappuccio", 3, "manopola, cappuccio pulsante, anelli di prova", "completo"),
-    ("04_diffusore",        4, "diffusore anello LED (PLA bianco)", "completo"),
+    ("01_bianco_diffusore", 4, "bianco", "diffusore dell'anello LED", "completo",
+     "0,20", "2", "100 % concentrico", "no",
+     "Faccia a vista sul piatto (sottile 1 mm = 5 strati). SOLO per questo pezzo. PLA bianco opaco/naturale, non silk, non trasparente"),
+    ("02_grigio_prova_tolleranze", 5, "grigio", "anelli di prova della manopola + diffusore di prova + tassello con sede anello LED", "prova",
+     "0,20", "3", "15 %", "no",
+     "Tassello e diffusore con la faccia a vista sul piatto, anelli in piedi. Il diffusore di prova serve solo a provare lo scatto: in grigio non fa luce"),
+    ("03_nero_scocca", 1, "nero", "scocca", "completo",
+     "0,20", "3", "15 % gyroid", "5 mm",
+     "Faccia superiore sul piatto, sede del modulo vibrazione e ganci dell'anello verso l'alto. Nessun supporto: ponti brevi (<= 6 mm) e labbri di 1 mm"),
+    ("04_nero_fondo_portaschede", 2, "nero", "fondo e portaschede", "completo",
+     "0,20", "3", "15 %", "no",
+     "Tutto in piano, nessun supporto. Svasature e scritte RST/BOOT sul lato a contatto col piatto. Ganci della SuperMini: 'Pareti precise' attivo"),
+    ("05_rame_manopola_pannelli", 3, "rame", "manopola e 2 pannelli laterali", "completo",
+     "0,16", "3", "20 %", "no",
+     "Manopola capovolta (faccia superiore sul piatto), pannelli con la faccia esterna sul piatto. 'Pareti precise' attivo"),
 ]
 DEFINE_COMUNI = ['mode="print"', 'part="all"', 'led_ring=true', 'diff_mode="insert"']
 
@@ -77,57 +95,106 @@ def misura_3mf(path):
     return mn, mx, abs(vol)
 
 
+def leggimi_md(misure):
+    """LEGGIMI.md dello zip (breve). misure: nome -> (size, volume mm3)."""
+    def peso(nome):
+        return misure[nome][1] / 1000 * PLA_DENS if nome in misure else float("nan")
+
+    g_bianco = peso("01_bianco_diffusore")
+    # diffusore: 100 % pieno, quindi il peso e' quasi esatto; margine per skirt/linea di spurgo
+    g_b_marg = g_bianco + 0.5
+    m_b = g_b_marg / G_PER_M
+    righe = []
+    for nome, plate, colore, descr, gruppo, strato, pareti, riemp, brim, nota in PIATTI:
+        g = peso(nome)
+        righe.append(f"| `{nome}.3mf` | {colore.upper()} | {descr} | {strato} | {pareti} | {riemp} | {brim} | <= {g:.0f} g |")
+    tab = "\n".join(righe)
+    return f"""# YouTubeController - pacchetto di stampa (Bambu Lab A1 mini, PLA, un colore per piatto)
+
+Un `.3mf` per piatto, pezzi gia' orientati e disposti entro 170 x 170 mm. Il numero nel nome e' l'ordine di stampa.
+Nessun supporto su nessun piatto. Profilo di base: "0.20mm Standard @BAMBU A1M", ugello 0,4, filamento PLA.
+
+## Pezzi per colore
+
+| Colore | Pezzi | Perche' |
+|--------|-------|---------|
+| BIANCO | diffusore dell'anello LED (SOLO questo) | l'unico pezzo che deve far passare la luce |
+| NERO | scocca, fondo, portaschede | corpo scuro: l'anello luminoso e il rame risaltano, le parti interne spariscono |
+| RAME | manopola, 2 pannelli laterali a feritoie | un solo accento caldo, coordinato tra manopola e feritoie |
+| GRIGIO | solo piatto di prova | filamento "di scarto" per le prove, non entra nel prodotto finale |
+| ARGENTO | non usato | (alternativa: pannelli in argento invece che in rame) |
+
+## Ordine di stampa e impostazioni
+
+| File | Colore | Pezzi | Strato | Pareti | Riempimento | Brim | PLA (limite sup.) |
+|------|--------|-------|--------|--------|-------------|------|-------------------|
+{tab}
+
+Orientamento (gia' nei file, non girare nulla):
+""" + "\n".join(f"- `{n}`: {nota}." for n, _, _, _, _, _, _, _, _, nota in PIATTI) + f"""
+
+## Diffusore bianco: quanto filamento serve
+- Peso del pezzo (100 % pieno): **circa {g_bianco:.1f} g**; con margine per skirt/spurgo **circa {g_b_marg:.1f} g = {m_b:.2f} m** di filamento da 1,75 mm (~{m_b * 100:.0f} cm).
+- Va stampato **per primo**, cosi' si sa subito se l'avanzo di bianco basta. Se lo scatto nella scocca risulta lasco o duro, regolare `diff_c` / `diff_snap` e ristampare (servira' altro bianco): per limitare il rischio si puo' provare lo scatto con il diffusore grigio del piatto 02 (non fa luce, ma ha la stessa forma).
+- Il bianco serve **solo** per questo pezzo.
+
+Se il bianco non c'e' o non basta: in **argento** (pigmento metallico) o **grigio** la luce passa quasi per niente a 1 mm. Alternative: (a) corona aperta, cioe' non montare il diffusore (i LED restano visibili nella feritoia e la polvere entra); (b) diffusore piu' sottile (`diff_t = 0.6` e rigenerare scocca + diffusore) in un colore chiaro; (c) stampa a vaso (una sola parete) in un colore chiaro.
+
+## Note
+- Prima della scocca stampare il piatto 02: gli anelli di prova danno il gioco da riportare in `knurl_fit` (manopola) e il tassello prova lo scatto dell'anello.
+- PLA: non lasciare al sole o in auto (oltre ~55 C si deforma). Caricare a temperatura ambiente.
+- Modulo vibrazione: scorre dal davanti nella sede sotto la faccia superiore della scocca (a scocca capovolta) fino alla battuta e scatta dietro i due ganci; il retro piatto resta a contatto con la faccia.
+- Sorgenti parametrici (OpenSCAD) nel repository, cartella `enclosure/`. Licenza MIT (vedi `LICENSE`).
+"""
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--solo-prova", action="store_true")
+    ap.add_argument("--solo", nargs="+", metavar="NN", help="rigenera solo i piatti con questo prefisso; gli altri 3MF in out/ restano")
     args = ap.parse_args()
 
     openscad = trova_openscad()
     OUT.mkdir(parents=True, exist_ok=True)
-    righe, errori = [], []
-    for nome, plate, descr, gruppo in PIATTI:
+    # ripulisce i 3MF vecchi con nomi diversi
+    for f in OUT.glob("*.3mf"):
+        if f.stem not in {p[0] for p in PIATTI}:
+            f.unlink()
+    errori, misure = [], {}
+    for nome, plate, colore, descr, gruppo, *_ in PIATTI:
         if args.solo_prova and gruppo != "prova":
             continue
         dest = OUT / f"{nome}.3mf"
-        print(f"- {dest.name}: {descr} ...", flush=True)
+        if args.solo and not any(nome.startswith(n) for n in args.solo):
+            if dest.exists():                      # non rigenerato: si riusano le misure del file esistente
+                mn, mx, vol = misura_3mf(dest)
+                misure[nome] = ([mx[i] - mn[i] for i in range(3)], vol)
+            continue
+        print(f"- {dest.name} [{colore}]: {descr} ...", flush=True)
         esporta(openscad, plate, dest)
         mn, mx, vol = misura_3mf(dest)
         size = [mx[i] - mn[i] for i in range(3)]
         ok = size[0] <= BED - 2 * MARGINE and size[1] <= BED - 2 * MARGINE and size[2] <= BED and abs(mn[2]) < 0.01
         if not ok:
             errori.append(nome)
-        righe.append((nome, size, vol, ok))
+        misure[nome] = (size, vol)
         print(f"  ingombro {size[0]:.1f} x {size[1]:.1f} x {size[2]:.1f} mm, "
-              f"PLA pieno {vol / 1000 * PLA_DENS:.0f} g  {'OK' if ok else 'FUORI PIATTO'}")
+              f"PLA pieno {vol / 1000 * PLA_DENS:.1f} g  {'OK' if ok else 'FUORI PIATTO'}")
 
-    # file di accompagnamento
-    impost = QUI / "IMPOSTAZIONI_STAMPA.md"
+    if args.solo_prova:
+        return
+    leggimi = OUT / "LEGGIMI.md"
+    leggimi.write_text(leggimi_md(misure), encoding="utf-8")
     lic = REPO / "LICENSE"
-    leggimi = OUT / "LEGGIMI.txt"
-    leggimi.write_text(
-        "YouTubeController - scatola stampabile (Bambu Lab A1 mini, tutto in PLA)\n"
-        "Controller fisico per YouTube: manopola (encoder) + pulsante, BLE HID verso iPad.\n\n"
-        "File: un .3mf per piatto, pezzi gia' orientati e disposti entro 180 x 180.\n"
-        "Stampare prima 00_prova_tolleranze. Impostazioni: IMPOSTAZIONI_STAMPA.md.\n"
-        "Sorgenti parametrici (OpenSCAD) nel repository del progetto, cartella enclosure/.\n"
-        "Licenza: MIT (vedi LICENSE).\n", encoding="utf-8")
-    extra = [p for p in (impost, lic, leggimi) if p.exists()]
     if not lic.exists():
         print("ATTENZIONE: LICENSE non trovato nella radice del repo")
-
-    gruppi = {"prova": ["prova"], "completo": ["prova", "completo"]}
-    for zipnome, inclusi in gruppi.items():
-        if args.solo_prova and zipnome != "prova":
-            continue
-        zpath = OUT / f"YouTubeController_{zipnome}.zip"
-        with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
-            for nome, _, _, gruppo in PIATTI:
-                f = OUT / f"{nome}.3mf"
-                if gruppo in inclusi and f.exists():
-                    z.write(f, f.name)
-            for p in extra:
-                z.write(p, p.name)
-        print(f"- {zpath.name} ({zpath.stat().st_size // 1024} kB)")
+    with zipfile.ZipFile(ZIP_STAMPA, "w", zipfile.ZIP_DEFLATED) as z:
+        for nome, *_ in PIATTI:
+            z.write(OUT / f"{nome}.3mf", f"{nome}.3mf")
+        z.write(leggimi, "LEGGIMI.md")
+        if lic.exists():
+            z.write(lic, "LICENSE")
+    print(f"- {ZIP_STAMPA.relative_to(REPO)} ({ZIP_STAMPA.stat().st_size // 1024} kB)")
 
     if errori:
         sys.exit(f"Pezzi fuori dal piatto: {', '.join(errori)}")

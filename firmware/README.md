@@ -2,6 +2,16 @@
 
 Codice del controller: lettura di encoder e pulsante, invio dei tasti via BLE HID.
 
+## Sketch
+
+| Cartella | Contenuto |
+|----------|-----------|
+| [`controller/`](controller/README.md) | **firmware v0** (2026-10-14): gesti, anello, vibrazione, tastiera BLE HID ("YouTube Controller", Just Works), WiFi di casa in NVS, portale `YTController-XXXX` su http://192.168.4.1/ (password AP pubblica `ytcontroller`, non un segreto), OTA manuale (`/update`) e da GitHub Release; log seriali con prefissi stabili e `monitor.html` |
+| [`test_comandi/`](test_comandi/README.md) | prova su breadboard di encoder, pulsante, anello e vibrazione |
+| [`millefori/`](millefori/README.md) | layout della schedina |
+
+Partizioni: **`PartitionScheme=min_spiffs`** (2 slot OTA da 1,9 MB). Formato dei log, scelte di riscontro e limiti: `controller/README.md`.
+
 ## Scheda: ESP32-S3 SuperMini
 
 Chip ESP32-S3FH4R2 (4 MB flash, 2 MB PSRAM quad). Acquistata (3 pezzi), in arrivo. Specifiche e costo in `docs/BOM.md`, misure in `enclosure/dimensioni.md`.
@@ -36,7 +46,7 @@ LED: WS2812 RGB su **GPIO48**; il LED rosso è dato anch'esso su GPIO48 da alcun
 | Encoder A | 4 | 2 | contatto a GND, `INPUT_PULLUP` | non sorgente di risveglio |
 | Encoder B | 5 | 2 | come sopra; comune C a GND | non sorgente di risveglio |
 | Vibrazione, IN | 6 | 2 | diretto al pin IN del modulo (PWM LEDC) | basso: pull-down (100 kΩ esterno se il modulo non ne ha uno) |
-| Pulsante PBS-110 | 7 | 2 | a GND, `INPUT_PULLUP` | `ext1`, attivo basso |
+| Pulsante (switch integrato dell'encoder) | 7 | 2 | a GND, `INPUT_PULLUP` | `ext1`, attivo basso |
 | Stato carica CHRG | 8 | 1 | 10 kΩ in serie verso il catodo del LED rosso (pin 7 TP4056), pull-up esterno 100 kΩ a 3V3 | `ext1`, attivo basso (solo se armato, vedi sotto) |
 | Alimentazione anello (comando) | 9 | 1 | 4,7 kΩ verso la base dell'NPN driver (2N3904), pull-down 10 kΩ base→GND | flottante → anello spento dalle resistenze |
 | Stato carica STDBY | 10 | 1 | 10 kΩ in serie verso il catodo del LED blu/verde (pin 6 TP4056), pull-up esterno 100 kΩ a 3V3 | `ext1`, attivo basso (solo durante la carica) |
@@ -65,15 +75,16 @@ Proposta per il prototipo: HijelHID_BLEKeyboard; ripiego: T-vK con core 2.0.17. 
 
 ### Encoder e pulsante: collegamento e lettura
 
-Encoder EC11E con pulsante integrato (albero zigrinato) e pulsante da pannello PBS-110 (NA), entrambi in possesso.
+Encoder EC11E con pulsante integrato (albero zigrinato), 20 impulsi / 20 scatti per giro (misurato 2026-10-14: 4 transizioni per scatto, riposo su A=B=1, orario = avanti).
+
+**Decisione 2026-10-14: il PBS-110 è eliminato**, play/pausa e gesti usano il pulsante integrato dell'encoder (provato su breadboard, vedi `firmware/test_comandi/`). GPIO7 e la logica dei gesti restano invariati.
 
 | Componente | Pin | Collegamento |
 |------------|-----|--------------|
 | Encoder | A | GPIO4 |
 | Encoder | C (centrale) | GND |
 | Encoder | B | GPIO5 |
-| Encoder, switch integrato | S1 / S2 | non collegati (push dell'encoder non usato) |
-| Pulsante PBS-110 | terminale 1 / 2 | GPIO7 / GND (non polarizzato) |
+| Encoder, switch integrato | S1 / S2 | GPIO7 / GND (non polarizzato) |
 
 - Pull-up: `INPUT_PULLUP` interni (~45 kΩ) bastano per il prototipo; con fili lunghi o rimbalzi evidenti aggiungere 10 kΩ verso 3V3 su A e B e 10 nF-100 nF verso GND (filtro RC, costante ~0,1-1 ms).
 - Quadratura: leggere A e B con interrupt su entrambi i fronti (o polling a 1 kHz) e una macchina a stati a tabella (16 transizioni, quelle non valide scartate). Contare un passo solo a stato di riposo (scatto) raggiunto: con 30 scatti/15 impulsi lo scatto cade su A=B (00 e 11), con 20/20 su 11; verificare a mano quanti scatti/giro ha il nostro. Libreria pronta in alternativa: `ESP32Encoder` (contatore hardware PCNT, filtro glitch integrato).
@@ -124,9 +135,9 @@ Il firmware misura la velocità e sceglie il livello; la PWA somma gli eventi e 
 - Alternativa da valutare se la coda risulta lenta: al livello veloce inviare 1 tasto ogni 2 scatti e far valere doppio il passo veloce nella PWA (richiede una modifica coordinata con l'app).
 - **Impatto app**: il timeout di "fine rotazione" della PWA deve essere più lungo della cadenza della coda (≥ 150-200 ms), altrimenti un'unica rotazione veloce produce più seek.
 
-### Gesti del pulsante (PBS-110, tabella unica)
+### Gesti del pulsante (switch integrato dell'encoder, tabella unica)
 
-Push dell'encoder **non usato**. Durate misurate dalla pressione stabile (dopo il debounce).
+Pulsante = switch integrato dell'encoder (PBS-110 eliminato il 2026-10-14). Durate misurate dalla pressione stabile (dopo il debounce).
 
 | Priorità | Gesto | Condizione | Azione | Quando scatta |
 |----------|-------|------------|--------|---------------|
@@ -360,7 +371,7 @@ Uso in firmware:
    GPIO8  ───[10 kΩ]──────────────────────────────────────────┼┘   + 100 kΩ GPIO8 → 3V3
    GPIO10 ───[10 kΩ]──────────────────────────────────────────┘    + 100 kΩ GPIO10 → 3V3
    GPIO4 ── encoder A      GPIO5 ── encoder B      encoder C ── GND
-   GPIO7 ── PBS-110 ── GND
+   GPIO7 ── switch encoder ── GND
 
  INTERRUTTORE ANELLO (sul portaschede, transistor TO-92 del kit)
                         VBAT

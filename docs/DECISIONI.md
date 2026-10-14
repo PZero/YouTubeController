@@ -57,3 +57,4 @@ Una voce per decisione: data, decisione, motivazione. Le voci non si riscrivono:
 | 2026-10-11 | Connettore unico scocca↔portaschede: pin header 2×4 passo 2,54 + Dupont 2×4 con chiave | Coperchio staccabile con una sola presa; JST-PH (2,0 mm) non compatibile con la millefori |
 | 2026-10-11 | Interruttore anello con transistor del kit (S8550 PNP + 2N3904 NPN), lettura carica con 10k + 100k (niente BAT43) | Componenti già in possesso: nessun acquisto di SMD |
 | 2026-10-11 | Modelli dei subagenti: app-pwa Sonnet (effort medium), design-3d Sonnet (effort high), elettronica-firmware Opus (effort medium) | Risparmio di token; Opus solo dove un errore di progetto può danneggiare componenti o batteria |
+| 2026-10-14 | Eliminato il pulsante PBS-110: play/pausa e gesti con il pulsante integrato dell'encoder (GPIO7) | Un solo comando, un foro in meno nella scocca; provato su breadboard. Gesto "premuto + scatti" più naturale con una mano |

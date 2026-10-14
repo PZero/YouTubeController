@@ -5,13 +5,13 @@ Unica fonte di verità per le misure fisiche. La aggiorna `elettronica-firmware`
 | Elemento | Larghezza | Profondità | Altezza | Note (fori, connettori, albero) |
 |----------|-----------|------------|---------|---------------------------------|
 | Scheda (ESP32-S3 SuperMini) | 18,00 (misurato dall'utente 2026-10-11, A) | 23,50 (PCB) + ~1,2-2,2 di USB-C sporgente; **27,0 totale con la USB-C misurato dall'utente (2026-10-11, A)** → la USB-C sporge ~3,5 se il PCB è 23,5 (lunghezza del solo PCB da misurare) | PCB ~1,0 (da misurare) + max 3,2 sopra (USB-C) = ~4,2-4,4 senza header (**5,0 misurato dall'utente in corrispondenza della USB-C, A**); header maschi: +2,5 plastica +~6 pin sotto | Disegno quotato ufficiale Nologo. 2 file da 9 pin passo 2,54 sui lati lunghi, interasse file 15,24. USB-C centrata sul lato corto (lato pin 5V/TX); antenna ceramica sul lato corto opposto (tenere ≥5 mm da viti/metallo/encoder/bobina Qi). BOOT/RST sopra (dome 3x2x0,6). Lato inferiore senza componenti (solo pad + gambe THT della USB-C). Nessun foro di montaggio. Dettagli nella sezione sotto |
-| Encoder (EC11E con switch, albero zigrinato) | 12,0 (corpo) | 11,6 (corpo); 14,2 con pin | corpo ~6,5 sopra PCB/fili + bussola 7 + albero 13 = albero lungo 20 dal piano di appoggio (variante 15 mm possibile: da misurare) | Bussola M7x0,75; albero Ø6 zigrinato 18 denti con taglio. Pin A-C-B passo 2,5 su un lato, switch 2 pin passo 5 sul lato opposto (a 14,5), linguette a 11,2 di interasse. Dettagli sotto |
-| Pulsante (PBS-110 "7 mm") | Ø ~9,5 corpo | | ~27 totale (tasto + filetto + corpo + terminali), da misurare | Foro pannello 7,0 (7,2 stampato); filetto ~M7 o 1/4" (fonti divergenti); dado esagonale + rondella. Dettagli sotto |
+| Encoder (EC11E con switch, albero zigrinato) — **dal 2026-10-14 il suo pulsante integrato fa play/pausa e tutti i gesti** | 12,0 (corpo) | 11,6 (corpo); 14,2 con pin | corpo ~6,5 sopra PCB/fili + bussola 7 + albero 13 = albero lungo 20 dal piano di appoggio (variante 15 mm possibile: da misurare) | Bussola M7x0,75; albero Ø6 zigrinato 18 denti con taglio. Pin A-C-B passo 2,5 su un lato, switch 2 pin passo 5 sul lato opposto (a 14,5), linguette a 11,2 di interasse. Dettagli sotto |
+| ~~Pulsante (PBS-110 "7 mm")~~ **ELIMINATO il 2026-10-14** | | | | Decisione dell'utente: play/pausa e gesti con il pulsante integrato dell'encoder (switch a 2 pin sul lato opposto ai pin A-C-B). Foro, lamatura, dado, cappuccio e spazio riservato rimossi dal modello. Dati storici nella sezione sotto |
 | Caricatore TP4056 USB-C | ~17-17,5 | ~26-28 (PCB) + sporgenza USB-C ~0,5-1 | ~4,3-4,9 totale (USB-C la parte più alta) | 4 fori agli angoli (Ø e interasse da misurare); USB-C su un lato corto; pad B+/B-/OUT+/OUT- sul lato opposto. Dettagli sotto |
 | Batteria 18650 (Jesspow, non protetta) | Ø18,5 (misurato dall'utente 2026-10-11, A) | 65,0 (misurato dall'utente 2026-10-11, A) | | Più il portabatteria se usato (es. Keystone 1042: ~77 x 21 x 15 circa, da verificare) |
 | Boost MT3608 | | | | non usato |
 | Anello LED WS2812B 16 LED | Ø est. 45,0 | Ø int. 33,0 | 3,0 (PCB + LED) | Misure dell'utente col calibro (2026-10-11), affidabilità A. LED 5050 su una faccia. Retro piatto con 6 piazzole in un arco (~60°, sul raggio medio ~19,5): − / DO / +5V (uscita) e − / DI / + (ingresso, da usare; filo rosso già saldato su +). Saldature sporgono ~1 mm sul retro: prevedere spazio e uscita dei 3 fili (foto utente 2026-10-11, affidabilità B). Va sotto il coperchio, centrato sull'encoder (manopola Ø32 → LED appena fuori dal bordo) |
-| Modulo vibrazione (motore a moneta ~Ø10, prob. 1027) | 21,0 (lato con i pin) | 23,0 | 5,0 nel punto più spesso (PCB + motore, senza pin) | Misure dell'utente col calibro 2026-10-11, affidabilità A. Pin GND/VCC/IN passo 2,54 sul lato da 21 (da dissaldare e sostituire con fili); 2 fori di fissaggio sul lato dei pin (Ø e interasse non misurati: fissaggio a incastro, fori non necessari). Transistor, diodo e resistenze a bordo; IN alto = vibra; ~70-90 mA. Dalla foto dell'utente, affidabilità C |
+| Modulo vibrazione (motore a moneta ~Ø10, prob. 1027) — **dal 2026-10-14 sotto la faccia superiore della scocca, non più sul portaschede** | 21,0 (lato con i pin) | 23,0 | 5,0 nel punto più spesso (PCB + motore, senza pin) | Misure dell'utente col calibro 2026-10-11, affidabilità A. **Spessore del solo PCB da misurare** (modello 1,6; serve alla sede a incastro). Pin GND/VCC/IN passo 2,54 sul lato da 21 (da dissaldare e sostituire con fili); 2 fori di fissaggio sul lato dei pin (Ø e interasse non misurati: fissaggio a incastro, fori non necessari). Transistor, diodo e resistenze a bordo; IN alto = vibra; ~70-90 mA. Dalla foto dell'utente, affidabilità C |
 | Schedina millefori di interfaccia (portaschede) | ~21 (8 fori, X) | ~34 (13 fori) | PCB ~1,6 + **max 12 sopra** (C1 elettrolitico in piedi 11,5; resistenze in piedi ~10; TO-92 ~8; J1 angolato 5,1) + **max 2 sotto** (saldature ~1,5) | Disposizione verificata in `firmware/millefori/` (script + SVG 1:1), 2026-10-11; ingombri dei componenti affid. B/C, taglio da misurare. Piazzole singole passo 2,54, coricata **sopra il TP4056** (soluzione C), lato saldature verso il modulo. Riga 1 = bordo anteriore (verso encoder), A1 = angolo anteriore-sinistro. **Fori di fissaggio M2 (Ø2,2)**: anteriori su A1 (1,61; 1,76) e H1 (19,39; 1,76) dal bordo sinistro/anteriore; posteriori = fori lato USB-C del TP4056, in **righe 12-13 lasciate libere** (posizione e interasse da misurare: parametri `INTERASSE_TP_POST`, `CENTRO_TP_X`, `Y_FORI_TP_POST`, default 13,5 centrato a y 32,1). **Zona critica** angolo anteriore-destro 6 x 7: solo J1 (5,1) e un filo (~3). Elettrolitico nella metà anteriore, centro (10,5; 9,4), Ø5, lontano dal chip. **Connettore J1** pin header 2x4 passo 2,54 sul bordo anteriore, colonne C-F righe 1-2 (x 5,4-15,6): angolato (default) alto 5,1 ma con pin + spina Dupont + fili sporge **~20-25 in avanti** oltre il bordo; diritto: nessuna sporgenza ma ~16,5 con spina (+3-5 fili), oltre i 12. 14 fili escono verso l'alto dal lato componenti (~3 mm) |
 | Transistor S8550 / 2N3904 (TO-92) | ~4,6 (4,4-5,2) | ~3,6 (3,4-4,0) | corpo ~4,6 + piedini (accorciati a ~3-5 su millefori) | Package TO-92 standard, affidabilità B. Sostituiscono i MOSFET SOT-23 (vincolo costi 2026-10-11) |
 | Condensatore 47-100 µF 16 V elettrolitico | Ø5 (o Ø6,3) | | 11 (o 7) + piedini | Affidabilità B (taglie standard); sulla schedina, coricabile |
@@ -114,7 +114,14 @@ Componente in possesso: clone tipo Alps EC11E vertical con switch, corpo metalli
 | Dado M7x0,75 | esagono ~9-10 sui piatti, spessore ~2; rondella Ø ~10-12 x 0,5 | tipico | **da misurare** |
 | Spessore pannello max | lunghezza bussola - dado - rondella ≈ 7 - 2,5 = ~4,5 | derivato | C |
 | Pulsante integrato | corsa 0,5 ±0,3, forza ~6 N (Alps EC11E15244G1) | Alps | B (clone diverso) |
-| Scatti / impulsi | Alps: 30 scatti, 15 impulsi/giro; clone spesso 20/20 | Alps, annunci | **da verificare** a mano |
+| Scatti / impulsi | **20 scatti/giro** (misurato dall'utente a mano, 2026-10-14); 60 zigrinature della manopola = 3 per scatto | utente | A |
+| Spinta assiale del pulsante | ~6 N a ogni pressione, corsa 0,5 ±0,3; la manopola poggia sulla punta dell'albero (fondo del foro = punta) e a fine corsa (0,8) restano 0,5 tra dado+rondella e manopola | Alps, modello | verifica del 2026-10-14 sotto |
+
+### Verifica della spinta assiale (2026-10-14)
+- Percorso del carico: dito → manopola → punta albero → switch nel corpo; la reazione passa dalla bussola al dado M7 e da lì sulla faccia (3,0 di PLA) con la rondella: pressione ≈ 6 N / ~50 mm² ≈ 0,1 MPa, trascurabile. Dado + rondella 2,5 + parete 3,0 = 5,5 su 7,0 di bussola: filetto sufficiente. **Non stringere a fondo** (il PLA sotto il dado cede nel tempo): bastano pochi decimi di giro oltre il contatto.
+- Il disco centrale (r < 16,65) che porta l'encoder è collegato alla faccia solo da 4 ponti (diffusore "insert"): larghezza 3,0 (era 2,0) x spessore 2,0, lunghezza 5,7. Stima con 6 N al centro: ~2 MPa; spinta sul bordo della manopola (r 16, leva): ~6 MPa; flessione < 0,01 mm. Resistenza del PLA nel piano degli strati ~40-50 MPa. Margine buono, ma da provare a mano sulla scocca stampata.
+- Foro di battuta: `bore_slack = 0` (la punta tocca il fondo del foro: la spinta non passa per l'attrito dello zigrino); se l'albero è più corto, la manopola scende da sola alla prima pressione.
+- Cava per dado nella manopola: era 1,2, ora 2,0 (`nut_recess_h` derivato da dado 2,0 + rondella 0,5 + corsa 0,8): prima dado e manopola si toccavano a fine corsa. Sotto la manopola restano 1,0 sopra la faccia/diffusore a fine corsa.
 
 Confronto con `enclosure/youtube_control.scad` (da aggiornare a cura di `design-3d`):
 - `shaft_d 6.15` + `shaft_flat 4.6` + grano M3: l'albero è zigrinato, non a D. Usare foro zigrinato 18 denti a pressione (vedi sotto) o foro tondo leggermente stretto; il grano M3 su zigrinatura tiene male.
@@ -124,28 +131,9 @@ Confronto con `enclosure/youtube_control.scad` (da aggiornare a cura di `design-
 - Parete 3 con incasso dado 1,2: restano ~1,8 di parete + dado 2 + rondella: compatibile con bussola da 5 o 7.
 - Foro zigrinato in OpenSCAD per FDM: profilo a stella di 18 denti, Ø esterno 6,0-6,1, Ø di fondo ~5,3-5,4 (profondità dente ~0,35), ugello 0,4 stampa i denti male: soluzione pratica = foro tondo Ø 5,9-6,0 (pressione, la zigrinatura incide la plastica) oppure stella con gioco +0,1-0,15 e prova di stampa di un anello campione. Il taglio dell'albero permette di stringere le due metà: interferenza 0,1-0,2.
 
-## Pulsante da pannello PBS-110 - quote meccaniche
+## Pulsante da pannello PBS-110 - ELIMINATO (2026-10-14)
 
-Componente in possesso: momentaneo NA, bussola metallica filettata con dado esagonale e rondella, corpo cilindrico nero, tasto blu, 2 terminali a paletta con foro. Nessun disegno ufficiale: dati da annunci divergenti.
-
-| Quota | Valore | Fonte | Affid. |
-|-------|--------|-------|--------|
-| Foro pannello | 7,0 (stampato: 7,2-7,3) | tutti gli annunci | B |
-| Filettatura | ~M7 oppure 1/4" (6,35) | ifuturetech dice 1/4", altri 7 mm | **da misurare** |
-| Diametro max (corpo/dado) | ~9,5 | ifuturetech | C |
-| Lunghezza totale | ~27 (26 premuto: corsa ~1) | ifuturetech | C |
-| Tasto | Ø 6-7, sporgenza sopra il dado ~4-6 | annunci divergenti | **da misurare** |
-| Lunghezza filetto utile / spessore pannello max | non pubblicata, stimato 4-6 | nessuna fonte | **da misurare** |
-| Dado | esagono ~9-10 sui piatti, spessore ~2 | stima | **da misurare** |
-| Ingombro sotto il pannello | corpo Ø ~9,5 + terminali saldati con fili: ~15-20 | stima | **da misurare** |
-| Corsa / forza | ~1 mm / non pubblicata | ifuturetech | C |
-| Portata contatti / vita | 1 A 250 VAC (alcuni 3 A 12 VDC); vita non pubblicata, tipica ~10.000 cicli | annunci | C |
-
-Impatto su `enclosure/youtube_control.scad` (da aggiornare a cura di `design-3d`):
-- Il sistema switch 6x6 + tasto stampato con flangia + supporto con M2 (`btn_hole_d 16.5`, `cap_*`, `sw_*`, `br_*`, `screw_dx`, `boss_*`) non serve più.
-- Nuovo montaggio: foro Ø 7,2 nella parete da 3 (spessore compatibile), dado all'interno; opzionale incasso esagonale dal lato interno o rondella antirotazione.
-- Estetica: si può mantenere un cappuccio stampato (Ø ~16) che calza sul tasto blu a pressione; attenzione che il cappuccio non tocchi il dado/la parete nella corsa (~1 mm) e che resti guidato.
-- Spazio interno: con piano a z0 = 43, tilt 10° e tasto a s = -33, la faccia interna sta a circa 34 mm dal fondo esterno, ~31 dal fondo interno: il pulsante (~15-20 sotto la parete) ci sta, ma va evitata la sovrapposizione con la 18650 (Ø 18,5) e con il portaschede in quella zona.
+Decisione dell'utente: il pulsante da pannello non si usa più; play/pausa e tutti i gesti passano dal pulsante integrato dell'encoder EC11E. Motivo: un solo organo di comando in mano, meno fori e componenti. Rimosso dal modello (foro Ø7,2, lamatura per dado, anello inciso, cappuccio, ingombro interno di 20 mm) e dal pacchetto di stampa. I dati raccolti (foro 7,0, M7 o 1/4", corpo Ø9,5, ~27 di lunghezza) restano nella cronologia git del file. Lo spazio liberato (davanti all'anello LED) ospita ora il modulo vibrazione.
 
 ## Interfacce fisse scocca / fondo / portaschede
 
@@ -161,8 +149,8 @@ Quote nel sistema della scocca (`youtube_control.scad`): X larghezza (centro sco
 | Spessore fondo / piastra portaschede | 3,0 / 2,8 (piastra da Z = 3 a 5,8) | fondo, portaschede |
 | Anello LED sotto la faccia superiore (eccezione alla regola modulare) | coassiale all'encoder (piano superiore x = 0, s = 14); PCB parallelo alla faccia, faccia inferiore a 7,0 dalla faccia superiore (centro: Y ≈ 15,0, Z ≈ 38,5); 4 ganci a scatto + 4 battute | scocca, anello |
 | Corona diffusore nella faccia superiore | r 16,6-22,4 attorno all'asse encoder | scocca, diffusore |
-| Connettore scocca → portaschede | pin header 2x4 passo 2,54 sulla schedina millefori (bordo anteriore, colonne C-F) + spina Dupont 2x4 con chiave; angolato: sporgenza in avanti ~20-25; riducibile a 1x3 solo anello (vedi riga componenti) | anello/encoder/pulsante, schedina |
-| Modulo vibrazione | in piedi contro la testata posteriore della culla 18650: X 9,2 ± 10,5, Y 29,4-34,4, Z 11-34 | portaschede |
+| Connettore scocca → portaschede | pin header 2x4 passo 2,54 sulla schedina millefori (bordo anteriore, colonne C-F) + spina Dupont 2x4 con chiave; angolato: sporgenza in avanti ~20-25; riducibile a 1x3 solo anello (vedi riga componenti). **Dal 2026-10-14 il modulo vibrazione è sulla scocca: servono 2-3 fili in più (IN, eventualmente VCC/GND) → 2x4 probabilmente non basta (da decidere con elettronica-firmware)** | anello/encoder (con pulsante)/vibrazione, schedina |
+| Modulo vibrazione | sotto la faccia superiore, davanti all'anello: PCB (21 x 23) con il retro piatto contro la faccia interna, x ±10,5, s da -35,4 a -12,4 (piano), motore verso l'interno (max 5 sotto la faccia); lato pin verso l'encoder | scocca (sede `vt_*`) |
 | Schedina millefori | in piedi in 2 guide a slitta: X -0,5…19,5, PCB Y 42,6-44,2, Z 10-40 | portaschede |
 
 ### Anello LED, diffusore, vibrazione, schedina - quote derivate (design-3d, 2026-10-11)
@@ -180,10 +168,10 @@ Coordinate: "piano" = sistema del piano superiore inclinato (x larghezza, s lung
 | Arco piazzole | centrato a 30° (verso destra-retro, `lr_pad_ang`) | i fili scendono sopra la cella, lontano dall'encoder |
 | Diffusore "insert" | anello r 16,65-22,35, spessore 1,0, sottosquadro 0,15 sul bordo esterno (entra a scatto dall'alto); gioco 0,05 per lato | sotto: 4 ponti larghi 2,0 allineati ai ganci reggono il disco centrale dell'encoder |
 | Diffusore "mmu" | corona piena r 16,6-22,4 per tutto lo spessore (3,0), senza ponti | stampato con la scocca (AMS lite), stessa trasformazione |
-| Modulo vibrazione | retro piatto del PCB contro la testata posteriore della culla (Y 29,4); motore verso il retro; 4 nervature schiacciabili (interferenza 0,15, PLA); appoggi agli angoli a Z 11; pareti alte fino a Z 23 | sotto (Z 5,8-11) tunnel per il filo + della cella; > 25 mm dall'antenna |
-| Variante vibrazione "a contatto col coperchio" | `vib_top_contact = true`: la parete posteriore sale fino a 0,2 dalla faccia superiore | non attiva di default |
+| Modulo vibrazione (sede sulla scocca, `vt_*`) | PCB a contatto con la faccia interna (z = -3,0 … -4,6), pinzato da 4 labbri (6 x 1,0, copertura bordo 1,0) con nervature di pinzatura 0,15 (PLA) e tenuto in avanti da 2 ganci a scatto sul piano (braccio 0,8 x 8,0, dente 0,6); pareti 1,2, battuta lato encoder con tacca fili 8 mm; gioco 0,2; battuta a s = -11,0 (anello e ganci a s > -9,7) | si infila dal davanti a scocca capovolta; richiede lo spessore PCB (modello 1,6, **da misurare**; se più sottile: biadesivo sottile o goccia di colla). Sostituisce la sede sul portaschede (scartata: vibrazione smorzata). |
+| Variante vibrazione sul portaschede | `vib_on = true` in `portaschede.scad` (in piedi dietro la culla) | scartata il 2026-10-14; i parametri `vib_*` restano perché fissano la posizione della millefori |
 | Schedina millefori | 20 (X) x 30 (Z) in piedi; componenti verso il davanti max 6,5 (elettrolitico **coricato**), saldature dietro max 2,0; parti alte ~10 (testata JST + spina) solo sopra Z 34,5; nessun componente a meno di 1,5 dai bordi laterali (guide) | spessore PCB 1,6 (C), guide con gioco 0,25 |
 | Vincolo cella | con 18650 protetta (67-70) la culla si allunga di 2-5 mm e la schedina non ci sta più | usare cella non protetta da 65 o rivedere la disposizione |
 | Bracci a scatto pannelli laterali | arrivano a X = ±21,25 (Y ≈ -24,7 e 32,7, Z 15-26): la culla 18650 li toccava (~1,6 mm³), ora c'è una tacca di 0,4 | difetto preesistente corretto |
 
-Motivo dello spostamento della presa USB (da X = +14 a X = -12): il portabatteria 18650 occupa il lato +X per quasi tutta la lunghezza (unico spazio libero dal corpo del pulsante, che sta a X = -10 davanti); il TP4056 va quindi sul lato -X dietro la SuperMini. A X = 14 il modulo (17,3 di larghezza) avrebbe toccato la torretta angolare; a -12 restano 1,8 mm.
+Motivo dello spostamento della presa USB (da X = +14 a X = -12): il portabatteria 18650 occupa il lato +X per quasi tutta la lunghezza (il lato -X era libero perché il pulsante PBS-110, ora eliminato, stava davanti); il TP4056 va quindi sul lato -X dietro la SuperMini. A X = 14 il modulo (17,3 di larghezza) avrebbe toccato la torretta angolare; a -12 restano 1,8 mm.

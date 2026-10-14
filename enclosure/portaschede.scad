@@ -76,12 +76,14 @@ bat_y1  = bat_y0 + bat_lc;                 // faccia posteriore della testata po
 bat_head_top = bat_zc + ct_h/2 + 0.5;      // quota della cima delle testate
 
 // ---------------- Modulo vibrazione (dimensioni.md: 21 x 23 x 5 con motore) ----------------
+// Dal 2026-10-14 il modulo e' sotto la faccia superiore della scocca (youtube_control.scad, vt_*): qui restano
+// solo le quote vib_w/h/t e la variante sul portaschede (vib_on = false), che fissa anche la posizione della millefori.
 // In piedi dietro la culla 18650: il retro piatto del PCB appoggia sulla testata posteriore della culla
 // (accoppiamento rigido culla -> piastra -> fondo -> scocca), lato motore verso il retro, premuto da
 // nervature schiacciabili. Lato dei pin (21) in alto: pad dei fili accessibili. Nessuna vite.
 // La zona e' a >25 mm dall'antenna della SuperMini.
-vib_on  = true;
-vib_w   = 21.0;  vib_h = 23.0;  vib_t = 5.0;     // lato pin (orizzontale, in alto), altezza, spessore max (A)
+vib_on  = false;           // SCARTATO 2026-10-14: il modulo vibrazione sta ora sotto la faccia superiore (vt_*)
+vib_w   = vt_w;  vib_h = vt_h;  vib_t = vt_t;     // lato pin (orizzontale, in alto), altezza, spessore max (A)
 vib_c   = 0.2;             // gioco per lato in larghezza; gioco in spessore prima delle nervature
 vib_rib = 0.35;            // nervature schiacciabili sul lato motore (interferenza = vib_rib - vib_c = 0.15, PLA)
 vib_rib_x = [-7.5, -2.5, 2.5, 7.5];   // posizione nervature (posizione del motore sul PCB non nota)
