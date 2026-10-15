@@ -242,7 +242,7 @@ export function createControls(deps) {
   function pokeUi() {
     clearTimeout(uiTimer);
     stageEl.classList.remove('ui-hidden');
-    if (fs.on) uiTimer = setTimeout(() => stageEl.classList.add('ui-hidden'), UI_HIDE_MS);
+    if (fs.on) uiTimer = setTimeout(() => { refocus(); stageEl.classList.add('ui-hidden'); }, UI_HIDE_MS);
   }
   $('progress').addEventListener('pointerdown', pokeUi, true);
 

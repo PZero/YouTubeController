@@ -171,7 +171,9 @@ button { font: inherit; color: inherit; }
   color: #e6e8eb; transition: opacity .25s ease;
 }
 .stage.fs.ui-hidden .progress { opacity: 0; pointer-events: none; }
+.stage.fs .tap-overlay { inset: 0; z-index: 3; } /* sempre sopra l'iframe, copre tutto il box */
 .stage.fs.ui-hidden .tap-overlay { cursor: none; }
+.stage.fs .play-invite, .stage.fs .seek-indicator, .stage.fs .toast { z-index: 5; }
 .stage.fs .toast { bottom: calc(70px + env(safe-area-inset-bottom)); }
 .stage.fs .seek-indicator { top: calc(14px + env(safe-area-inset-top)); }
 /* Riempi: l'iframe 16:9 copre il contenitore, i bordi in eccesso sono tagliati (misure da fullscreen.js) */

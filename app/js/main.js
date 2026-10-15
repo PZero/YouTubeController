@@ -7,7 +7,7 @@ import { createPlayerController, playerErrorText, STATE } from './player.js';
 import { createFullscreen } from './fullscreen.js';
 import { createControls } from './controls.js';
 
-export const APP_VERSION = '1.1.3'; // allineare a CACHE_VERSION in sw.js
+export const APP_VERSION = '1.1.4'; // allineare a CACHE_VERSION in sw.js
 const LAST_KEY = 'ytc.last.v1';
 // Video caricato all'avvio quando non c'e' un ultimo video (primo avvio): pronto per provare il controller
 const DEFAULT_VIDEO = { id: 'aqz-KE-bpKQ', title: 'Big Buck Bunny', channel: 'Blender' };
@@ -19,6 +19,7 @@ let playSession = false;   // true dal PLAYING fino a pausa/fine (per lo schermo
 // ---------------- moduli ----------------
 const fs = createFullscreen($('stage'), (on) => {
   $('btnFull').setAttribute('aria-label', on ? 'Esci dallo schermo pieno' : 'Schermo pieno');
+  refocus();         // i tasti restano alla pagina a ogni entrata/uscita
   controls.pokeUi(); // entrando mostra la barra per qualche secondo; uscendo la ripristina
 }, () => settings.fsMode !== 'fit');
 
@@ -266,6 +267,20 @@ document.addEventListener('click', (e) => {
   const b = e.target.closest && e.target.closest('button');
   if (b && !b.closest('dialog')) refocus();
 });
+
+// Rete di sicurezza: se il focus finisce nell'iframe di YouTube (cross-origin) i tasti non
+// arrivano piu' alla pagina. Quando succede (la finestra perde il focus a favore dell'iframe) lo si riprende.
+function reclaimFromIframe() {
+  if (dlg.isOpen() || document.hidden) return;
+  const a = document.activeElement;
+  if (!a || a === document.body || a.tagName === 'IFRAME') {
+    refocus(); // focusSink: nessuna tastiera a schermo (non e' un campo di testo)
+    try { window.focus(); } catch (e) { /* ignora */ }
+  }
+}
+window.addEventListener('blur', () => setTimeout(reclaimFromIframe, 0));
+setInterval(reclaimFromIframe, 500);
+document.addEventListener('focusout', () => setTimeout(reclaimFromIframe, 0));
 
 // ---------------- avvio ----------------
 $('appVersion').textContent = 'Versione ' + APP_VERSION;
