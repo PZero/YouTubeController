@@ -7,10 +7,9 @@
 //  (X larghezza, Y lunghezza, +Y retro, z=0 faccia esterna del fondo):
 //  la piastra va da z = lid_t a z = lid_t + sled_t.
 //
-//   - MILLEFORI UNICA 8 x 20 (22,54 x 60 mm) PIATTA nella corsia sinistra, con la ESP32-S3 SuperMini
-//     saldata sopra (strip maschio, componenti verso l'alto, USB-C verso il FRONTE della scocca) e tutta
-//     l'interfaccia: 2 torrette M3 sul lato sinistro, lato destro (tagliato) tenuto da 3 fermi a C sulla
-//     parete della culla, 2 battute dietro. Decisione 2026-10-15 (firmware/millefori/README.md)
+//   - CORSIA SINISTRA LIBERA E PIANA per il "pacco" elettronico (millefori 8 x 20 con la SuperMini saldata sopra,
+//     isolata con guaina/kapton): NON e' fissata (decisione 2026-10-15, V1); la corsia lo contiene con 3 nervature
+//     basse (1 davanti, 2 dietro) e con la parete della culla / il condotto del pannello sinistro sui lati
 //   - modulo TP4056 USB-C su 4 colonnine (viti M2), USB-C allineata alla presa sul retro
 //   - culla per cella 18650 con sedi per contatti a piastrina/molla, fori fili
 //   - tasca "parcheggio" del connettore volante 2 x 5 (codino della millefori <-> cablaggio della scocca)
@@ -57,7 +56,7 @@ bat_end_t = 3.2;           // testate (contengono la sede del contatto)
 ct_w = 11;  ct_h = 12;  ct_t = 0.6;  ct_win = 7;  ct_lip = 0.8;
 bat_wire_d = 2.6;          // foro filo nelle testate
 tie_w = 4.5;  tie_d = 1.5; // fascetta (ritegno cella): una sola, nel tratto dietro la millefori
-tie_y = 19.7;              // centro della fascetta (la millefori occupa la parete sinistra della culla fino a y 17.1; TP4056 da 20.4)
+tie_y = 21.6;              // centro della fascetta (dietro la corsia del pacco, che arriva a Y 19,1; TP4056 da 20,4 ma a X <= -3,35)
 bat_r   = bat_d/2 + bat_clr;
 bat_lin = bat_len + bat_allow;
 bat_lc  = bat_lin + 2*bat_end_t;
@@ -67,44 +66,42 @@ bat_xl  = bat_x - bat_xo;                  // faccia sinistra della culla (0.7)
 bat_y1  = bat_y0 + bat_lc;                 // faccia posteriore della testata posteriore
 bat_head_top = bat_zc + ct_h/2 + 0.5;      // quota della cima delle testate
 
-// ---------------- Millefori unica 8 x 20 con la SuperMini (firmware/millefori/README.md) ----------------
-// Sistema millefori: x verso destra (A = lato sinistro INTATTO con i 2 fori M3), y verso il retro (riga 1 = FRONTE,
-// USB-C), origine nell'angolo anteriore-sinistro, lato componenti in alto. Nella scocca: X_scocca = mf_x0 + x, Y_scocca = mf_y0 + y.
+// ---------------- Pacco elettronico libero nella corsia sinistra ----------------
+// Millefori unica 8 x 20 (22,54 x 60) con la SuperMini saldata sopra (strip maschio): firmware/millefori/README.md.
+// V1: niente fissaggi (torrette, fermi, battute rimossi), il pacco e' avvolto in guaina/kapton e appoggia sulla piastra.
+// Sistema millefori (solo per il modello di anteprima e gli inviluppi): x verso destra (A = lato sinistro intatto),
+// y verso il retro (riga 1 = lato USB-C della SuperMini), lato componenti in alto.
 mf_on     = true;
-mf_w      = 22.54;  mf_l = 60;  mf_t = 1.6;       // 8 colonne tagliate a meta' passo (3,49 + 7 x 2,54 + 1,27) x 20 righe
+mf_w      = 22.54;  mf_l = 60;  mf_t = 1.6;       // 8 colonne tagliate a meta' passo x 20 righe
 mf_pitch  = 2.54;
 mf_a1     = [3.49, 5.87];                         // centro del foro A1
-mf_holes  = [[2.0, 2.0], [2.0, 58.0]];            // 2 fori M3 originali (presunti: DA MISURARE)
-mf_hole_d = 3.2;
-mf_head_d = 5.5;  mf_head_h = 1.7;                // viti M3 testa bassa (ISO 7380 / DIN 7985): M3x6, non piu' lunghe
-mf_st     = 3.0;                                  // colonnine: faccia inferiore del PCB a sp_top + mf_st (saldature <= 1.8 -> 1.2 di gioco)
-mf_boss_d = 4.8;  mf_pilot = 2.6;  mf_pilot_depth = 5.4;   // torrette M3 autofilettanti (la piastra e' 2.8 + colonnina 3.0)
 mf_sold   = 1.8;                                  // lato saldature (piedini a ~1, fili 30 AWG)
 mf_comp   = 11.5;                                 // altezza massima componenti (elettrolitici 5 x 11)
-mf_cell_gap = 0.4;                                // gioco tra bordo destro della millefori e parete della culla
-mf_x1     = bat_xl - mf_cell_gap;                 // bordo destro  (0.3)
-mf_x0     = mf_x1 - mf_w;                         // bordo sinistro (-22.24); il condotto del pannello sinistro inizia a X = -(BW/2 - wall - duct_len) = -23
-mf_y0     = -42.9;                                // bordo anteriore: la testa della vite anteriore (Ø5.5, a x -20.24) deve stare >= 0.2 dalla torretta angolare della scocca (r 4.2 a -26.68,-44.18)
-mf_zb     = sp_top + mf_st;                       // faccia inferiore del PCB
-mf_zt     = mf_zb + mf_t;                         // faccia componenti
-// SuperMini sulla millefori: strip maschio 2 x 1x9 (plastica 2.5), file sulle colonne B (TX..) e H (5V..), righe 1-9
-mf_strip_h = 2.5;
+mf_strip_h = 2.5;                                 // plastica della strip maschio della SuperMini
 mf_sm_x   = 22.65;  mf_sm_y = 4.28;               // angolo del PCB della SuperMini (x massimo, y minimo) sulla millefori
-mf_usb_cx = 13.65;                                // centro X della USB-C sulla millefori
-mf_usb_dz = 5.1;                                  // centro USB-C sopra la faccia componenti (2.5 + 1.0 + 1.6)
-mf_usb_x  = mf_x0 + mf_usb_cx;                    // coordinate scocca del centro della presa (finestra sul fronte)
-mf_usb_z  = mf_zt + mf_usb_dz;
-mf_usb_y  = mf_y0 + mf_sm_y - sm_usb_out;         // faccia anteriore della presa (con sporgenza 3.5: millefori y 0.78)
-// fermi a C sulla parete sinistra della culla (righe H libere: nessun componente ne saldatura nella colonna H)
-mf_clip_rows = [10, 15, 19];   // righe (colonna H libera sul lato componenti e su quello saldature)
-mf_clip_dy   = [0, 0, -0.4];    // spostamento in Y (riga 19: l'elettrolitico C3 parte a y 51.6)
-mf_clip_l   = 1.4;      // lunghezza (Y)
-mf_clip_led = 1.4;      // appoggio sotto il bordo destro
-mf_clip_lip = 0.9;      // labbro sopra il bordo destro
-mf_clip_gap = 0.3;      // gioco tra faccia componenti e labbro
-mf_clip_t   = 1.0;      // spessore del labbro
-// battute posteriori (spinta della spina USB)
-mf_stop_x   = [4.0, 14.0];  mf_stop_w = 4.0;  mf_stop_d = 1.5;
+mf_hole_d = 3.2;  mf_holes = [[2.0, 2.0], [2.0, 58.0]];   // fori M3 originali (non usati: solo per il modello)
+mf_head_d = 5.5;  mf_head_h = 1.7;
+
+// corsia: tra il condotto del pannello sinistro (a X = -23) e la parete sinistra della culla (X = 0,7);
+// davanti una nervatura, dietro due (spazio libero tra le nervature = lunghezza del pacco + 1,8)
+ln_x0 = -(BW/2 - wall - duct_len);                // faccia del condotto del pannello sinistro (-23)
+ln_x1 = bat_xl;                                   // parete sinistra della culla (0,7)
+ln_y0 = -42.0;  ln_y1 = 20.0;                     // facce interne delle nervature (davanti: dietro la torretta angolare della scocca, a X -26,68 / Y -44,18; dietro: davanti al TP4056, bordo a Y 20,4)
+ln_w  = ln_x1 - ln_x0;  ln_l = ln_y1 - ln_y0;     // 23,7 x 62,0
+rib_h = 5;  rib_t = 0.8;   // altezza 5: la ribalta posteriore resta sotto il PCB del TP4056 (Z 11,2)                          // nervature basse di contenimento
+rib_front = [-20, -3];                            // intervallo X della nervatura anteriore
+rib_rear  = [[-20, -14], [-8, -2]];               // intervalli X delle 2 nervature posteriori
+// ingombro del pacco (con guaina): 22,8 x 60,2; la parte alta (componenti) parte a 2,1 dal bordo sinistro, la fascia a sinistra
+// e' solo PCB + saldature (i denti dei bracci dei pannelli entrano fino a X = -21,25 tra Z 14,6 e 21,8, Y -26,0...-23,1)
+pk_w = 22.8;  pk_l = 60.2;  pk_h = 15;  pk_lo_h = 5;  pk_lo_w = 2.1;
+pk_dx = 0;  pk_dy = 0;                            // spostamento di prova rispetto alla posizione centrata (+-0,45 / +-0,9 al massimo)
+pk_x0 = ln_x0 + (ln_w - pk_w)/2 + pk_dx;
+pk_y0 = ln_y0 + (ln_l - pk_l)/2 + pk_dy;
+// posizione di riferimento della millefori dentro la guaina (solo anteprima/inviluppi)
+mf_x0 = pk_x0 + (pk_w - mf_w)/2;
+mf_y0 = pk_y0 + (pk_l - mf_l)/2;
+mf_zb = sp_top + mf_sold + 0.2;                   // faccia inferiore del PCB (appoggia sulle saldature)
+mf_zt = mf_zb + mf_t;
 function mf_row_y(r) = mf_y0 + mf_a1.y + (r - 1)*mf_pitch;
 
 // ---------------- Tasca "parcheggio" del connettore volante 2 x 5 ----------------
@@ -136,14 +133,12 @@ module sled() {
             for (h = tp_holes) translate([h.x, h.y, sp_top - 0.01]) cylinder(d=tp_so_d, h=tp_zb - sp_top + 0.01, $fn=32);
             // culla 18650
             bat_cradle_solid();
-            if (mf_on) { mf_posts(); mf_clips(); mf_stops(); cn_pocket(); }
+            if (mf_on) { lane_ribs(); cn_pocket(); }
         }
         // fori pilota viti fondo (dal basso)
         for (p = sled_scr) translate([p.x, p.y, lid_t - 0.01]) cylinder(d=pilot_d, h=sled_boss_top - lid_t - 0.8, $fn=24);
         // fori pilota TP4056
         for (h = tp_holes) translate([h.x, h.y, sp_top]) cylinder(d=tp_pilot, h=tp_zb, $fn=20);
-        // fori pilota M3 della millefori
-        if (mf_on) for (h = mf_holes) translate([mf_x0 + h.x, mf_y0 + h.y, mf_zb - mf_pilot_depth]) cylinder(d=mf_pilot, h=mf_pilot_depth + 0.01, $fn=24);
         if (mf_on) cn_cuts();
         bat_cradle_cuts();
         // spazio per i bracci a scatto dei pannelli laterali (toccavano la culla 18650)
@@ -162,22 +157,11 @@ module arm_clear() on_walls() for (sg = [1, -1]) {
         cube([arm_t + barb_h + 2*arm_clr, aw + 2*arm_clr, lze - tp + arm_clr]);
 }
 
-// ---------------- sostegni della millefori ----------------
-// 2 torrette M3 sul lato sinistro (fori originali); la scheda poggia sulla loro cima (mf_zb)
-module mf_posts() for (h = mf_holes)
-    translate([mf_x0 + h.x, mf_y0 + h.y, sp_top - 0.01]) cylinder(d=mf_boss_d, h=mf_zb - sp_top + 0.01, $fn=32);
-
-// 3 fermi a C sulla parete sinistra della culla: appoggio sotto il bordo destro + labbro sopra (con gioco).
-// La scheda si inserisce inclinata (bordo destro in basso sotto i labbri), poi si abbassa il lato sinistro e si avvitano le 2 viti.
-module mf_clips() for (i = [0:len(mf_clip_rows)-1]) {
-    yc = mf_row_y(mf_clip_rows[i]) + mf_clip_dy[i];  wd = bat_xl - mf_x1;
-    translate([mf_x1 - mf_clip_led, yc - mf_clip_l/2, sp_top - 0.01]) cube([mf_clip_led + wd + 0.01, mf_clip_l, mf_zb - sp_top + 0.01]);
-    translate([mf_x1 - mf_clip_lip, yc - mf_clip_l/2, mf_zt + mf_clip_gap]) cube([mf_clip_lip + wd + 0.01, mf_clip_l, mf_clip_t]);
+// ---------------- nervature di contenimento della corsia (NON fissaggi) ----------------
+module lane_ribs() {
+    translate([rib_front[0], ln_y0 - rib_t, sp_top - 0.01]) cube([rib_front[1] - rib_front[0], rib_t, rib_h + 0.01]);
+    for (r = rib_rear) translate([r[0], ln_y1, sp_top - 0.01]) cube([r[1] - r[0], rib_t, rib_h + 0.01]);
 }
-
-// 2 battute dietro il bordo posteriore della scheda (contro la spinta di inserimento della spina USB)
-module mf_stops() for (x = mf_stop_x)
-    translate([mf_x0 + x, mf_y0 + mf_l + 0.2, sp_top - 0.01]) cube([mf_stop_w, mf_stop_d, mf_zt - sp_top + 0.01]);
 
 // ---------------- tasca del connettore volante ----------------
 module cn_pocket() {

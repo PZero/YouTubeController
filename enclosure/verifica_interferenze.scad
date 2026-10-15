@@ -1,13 +1,13 @@
 // ======================================================================
 //  VERIFICA INTERFERENZE (non e' un pezzo da stampare)
-//  Per ogni chk = 1..22 esporta l'intersezione tra gruppi di pezzi/componenti:
+//  Per ogni chk = 1..24 esporta l'intersezione tra gruppi di pezzi/componenti:
 //    openscad -o chkN.stl -D chk=N verifica_interferenze.scad
 //  Esito atteso: "Current top level object is empty" oppure volume 0 (solo facce a contatto:
 //  chk 4, 7, 8, 14). Eccezione voluta: chk 11 = piccole nervature di pinzatura del modulo vibrazione
 //  (pinch 0,15 mm sui labbri). chk 19 (radici dei ganci nella parete) = solo contatto.
 //  Gli inviluppi (encoder_env, led_ring_env, vib_top_env, mf_env, mf_sm_env, cn_env, plug_env) stanno in componenti.scad.
-//  2026-10-15: millefori unica 8x20 con SuperMini (mf_env + mf_sm_env), connettore volante in tasca (cn_env, chk 21),
-//  spina USB-C nella finestra sul fronte (plug_env, chk 22).
+//  2026-10-15 (V1): pacco elettronico LIBERO nella corsia sinistra (pk_env, chk 13 e 24 agli estremi della corsia),
+//  connettore volante in tasca (cn_env, chk 21), spina USB-C nella presa del TP4056 dal retro (plug_env, chk 22).
 //  Pulsante PBS-110 eliminato il 2026-10-14: chk 2 e 5 (pulsante e cappuccio) ora sono il modulo vibrazione.
 // ======================================================================
 include <youtube_control.scad>
@@ -15,7 +15,7 @@ mode = "none";
 chk = 1;
 module enc() top_frame() translate([K.x,K.y,0]) encoder_env();
 module cell() battery_model();
-module elec() { mf_sm_env(); tp4056_model(); }          // SuperMini con la strip + TP4056
+module elec() { tp4056_model(); }          // TP4056 (il pacco SuperMini + millefori e' mf() = pk_env)
 module cn()   cn_env();
 module knobw() top_frame() translate([K.x,K.y,knob_gap]) knob();
 module knobp() top_frame() translate([K.x,K.y,knob_gap - enc_travel]) knob();   // manopola a fine corsa del pulsante
@@ -24,7 +24,7 @@ module ring()  top_frame() translate([K.x,K.y,0]) led_ring_env();
 module diffw() top_frame() translate([K.x,K.y,0]) diffuser();
 module vt()    top_frame() vib_top_env();
 module vtp()   top_frame() vib_top_pcb();
-module mf()    mf_env();
+module mf()    pk_env();
 module newp()  { ring(); vt(); mf(); }
 module ringx() top_frame() translate([K.x,K.y,0]) led_ring_model();   // modello (LED reali, non inviluppo)
 module ring_feat() top_frame() translate([K.x,K.y,0]) { lr_arms(); lr_stops(); lr_pockets(); }
@@ -64,5 +64,7 @@ if (chk==21) intersection() { cn(); union() { body(); on_walls() panel_local(); 
 // la tasca (pareti) vs ingombri: bracci dei pannelli, cella, altri sostegni, TP4056
 module cn_pocket_only() intersection() { cn_pocket(); translate([0,0,sp_top]) cube([200,200,60], center=false); }
 if (chk==23) intersection() { cn_pocket_only(); union() { on_walls() panel_local(); cell(); elec(); mf(); } }
-// spina USB-C normale (guscio 12 x 6.5) infilata nella presa della SuperMini: deve passare dalla finestra del fronte senza toccare nulla
+// spina USB-C normale (guscio 12 x 6,5) infilata nella presa del TP4056 dal retro: deve passare dalla finestra 13 x 7 senza toccare nulla
 if (chk==22) intersection() { plug_env(); union() { body(); sled(); lid(); cell(); mf(); on_walls() panel_local(); } }
+// (chk 24: lanciare con -D pk_dx=.. -D pk_dy=.. agli estremi (+-0,45 / +-0,9): pacco vs scocca, pannelli, sled (nervature), cella, TP4056)
+if (chk==24) intersection() { mf(); union() { body(); on_walls() panel_local(); sled(); cell(); tp4056_model(); lid(); } }

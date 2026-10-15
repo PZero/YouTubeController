@@ -16,8 +16,8 @@ Licenza: **MIT** (file `LICENSE` incluso). Sorgenti parametrici OpenSCAD in `enc
 |--------|-----------|--------|--------|-------------|----------|------|---------------------|-----------|
 | 01_bianco_diffusore | PLA bianco opaco/naturale (non trasparente, non "silk") | 0,20 | 2 | **100 %**, concentrico | no | no | Faccia a vista sul piatto, 1 mm = 5 strati | ~1 g |
 | 02_grigio_prova_tolleranze | PLA grigio | 0,20 | 3 | 15 % | no | no | Tassello e diffusore con la faccia a vista sul piatto; anelli in piedi | ~9 g |
-| 03_nero_scocca | PLA nero | 0,20 | 3 | 15 % gyroid | **no** | 5 mm consigliato | Faccia superiore sul piatto. Ponti ≤ 6 mm (tasche dei ganci, ponti del diffusore), finestra USB-C del fronte 14,5 x 8,5 (ponte ~14 mm con angoli r 2,5) e labbri di 1 mm della sede vibrazione | ~78 g |
-| 04_nero_fondo_portaschede | PLA nero | 0,20 | 3 | 15 % | no | no | Tutto in piano. Fermi a C della millefori e tasca del connettore: "Pareti precise" attivo | ~52 g |
+| 03_nero_scocca | PLA nero | 0,20 | 3 | 15 % gyroid | **no** | 5 mm consigliato | Faccia superiore sul piatto. Ponti ≤ 6 mm (tasche dei ganci, ponti del diffusore) e labbri di 1 mm della sede vibrazione | ~78 g |
+| 04_nero_fondo_portaschede | PLA nero | 0,20 | 3 | 15 % | no | no | Tutto in piano. Nervature della corsia e tasca del connettore: "Pareti precise" attivo | ~52 g |
 | 05_rame_manopola_pannelli | PLA rame | 0,16 | 3 | 20 % | no | no | Manopola capovolta, pannelli con la faccia esterna sul piatto. "Pareti precise" attivo | ~22 g |
 
 I grammi sono calcolati dal volume pieno dei pezzi e sono un limite superiore (il LEGGIMI dello zip ha i valori esatti): peso reale e tempi li dà Bambu Studio dopo lo slicing.

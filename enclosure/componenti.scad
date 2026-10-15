@@ -152,7 +152,6 @@ module mf_model() {
             cube([mf_w, mf_l, mf_t]);
             for (h = mf_holes) translate([h.x, h.y, -1]) cylinder(d=mf_hole_d, h=mf_t + 2, $fn=24);
         }
-        for (h = mf_holes) color(c_metal) translate([h.x, h.y, mf_t]) cylinder(d=mf_head_d, h=mf_head_h, $fn=24);
         for (p = mf_parts) {
             x1 = mf_cx(p[0]);  y1 = mf_ry(p[1]);
             two = len(p) > 3;
@@ -168,34 +167,21 @@ module mf_model() {
         }
     }
     mf_sm_all();
+    pk_model();
 }
 
-// inviluppo della millefori SENZA SuperMini: PCB, lato saldature, teste delle viti e componenti per zone
-// (zona antenna x 4.8-17.8, y 24.2-32.5 libera; sopra la SuperMini nessun componente; colonna A bassa fino alla riga 10)
-module mf_env() mf_frame() {
-    cube([mf_w, mf_l, mf_t]);
-    difference() {                                                    // saldature e piedini sotto la scheda
-        translate([0.3, 0.3, -mf_sold]) cube([mf_w - 0.6, mf_l - 0.6, mf_sold + 0.01]);
-        for (h = mf_holes) translate([h.x, h.y, -mf_sold - 1]) cylinder(r = mf_boss_d/2 + 0.2, h = mf_sold + 2, $fn=24);
-        for (i = [0:len(mf_clip_rows)-1]) translate([mf_w - mf_clip_led - 0.2, mf_ry(mf_clip_rows[i]) + mf_clip_dy[i] - mf_clip_l/2 - 0.1, -mf_sold - 1]) cube([mf_clip_led + 1, mf_clip_l + 0.2, mf_sold + 2]);
-    }
-    for (h = mf_holes) translate([h.x, h.y, mf_t]) cylinder(d=mf_head_d, h=mf_head_h, $fn=24);   // teste delle viti
-    translate([4.8, 32.5, mf_t]) cube([13.0, mf_l - 32.5 - 0.8, mf_comp]);          // righe 12-20, colonne B-F
-    translate([2.0, 28, mf_t]) cube([2.6, mf_l - 28 - 0.8, mf_comp]);               // colonna A (R6, R7, R8, R9): corpi a x 2,3-4,7
-    difference() {                                                                   // colonne G-H (D1, Q1, R4, R10, C3, C4), senza i tratti dei fermi
-        translate([17.8, 28, mf_t]) cube([mf_w + 0.1 - 17.8, mf_l - 28 - 0.8, mf_comp]);
-        for (i = [0:len(mf_clip_rows)-1]) translate([mf_w - mf_clip_lip - 0.5, mf_ry(mf_clip_rows[i]) + mf_clip_dy[i] - 0.9, mf_t - 1]) cube([3, 1.8, 20]);
-    }
-    translate([2.0, 4, mf_t]) cube([2.6, 24, 6]);                                    // colonna A: C2 e fili (alti ~3-6)
+// inviluppo del PACCO (millefori + SuperMini + componenti + guaina), libero nella corsia: fascia sinistra bassa
+// (solo PCB e saldature), corpo alto dai 2,1 mm dal bordo sinistro in poi. pk_dx/pk_dy spostano il pacco per le prove agli estremi.
+module pk_env() translate([pk_x0, pk_y0, sp_top + 0.01]) {
+    cube([pk_w, pk_l, pk_lo_h]);
+    translate([pk_lo_w, 0, 0]) cube([pk_w - pk_lo_w, pk_l, pk_h]);
 }
-// inviluppo della SuperMini con la strip (scheda + plastica + USB-C): per i controlli
-module mf_sm_env() mf_frame() {
-    for (c = [1, 7]) translate([mf_cx(c) - 1.27, mf_ry(1) - 1.27, mf_t]) cube([2.54, 9*2.54, mf_strip_h]);
-    mf_sm_frame() supermini_model();
-}
-// spina USB-C normale infilata nella presa: guscio 12 x 6.5 dalla faccia della presa verso l'esterno (25 mm), per controllare la finestra sul fronte
+// guaina semitrasparente attorno al pacco (anteprima)
+module pk_model() %color("#e0a030", 0.35) translate([pk_x0, pk_y0, sp_top + 0.01]) cube([pk_w, pk_l, pk_h]);
+// spina USB-C normale (guscio 12 x 6,5, angoli r 2,5) infilata nella presa del TP4056 dal retro: deve passare dalla finestra 13 x 7
 plug_w = 12.0;  plug_h = 6.5;  plug_len = 25;
-module plug_env() translate([mf_usb_x - plug_w/2, mf_usb_y - plug_len - 0.01, mf_usb_z - plug_h/2]) cube([plug_w, plug_len, plug_h]);
+module plug_env() translate([usb_x, tp_y1 + tp_usb_out + 0.01, usb_z]) rotate([-90,0,0]) translate([0,0,0])
+    linear_extrude(plug_len) rr2d(plug_w, plug_h, 2.5);
 
 // connettore volante (coppia innestata 2 x 5, in piedi nella tasca): ingombro con 5 mm di curvatura dei fili in alto
 module cn_model() color("#d8d8d8") translate([cn_xi[0] + cn_c.x, cn_yi[0] + cn_c.y, sp_top]) cube([cn_w, cn_d, cn_h]);

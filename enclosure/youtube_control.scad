@@ -4,12 +4,12 @@
 //  PEZZI:
 //   1  body      scocca 105x70 (3:2), piano superiore inclinato, spigoli arrotondati, finestre/condotti di
 //                raffreddamento, foro manopola, sede RIGIDA del modulo vibrazione sotto la faccia superiore,
-//                torrette viti, presa USB-C di ricarica sul retro, finestra USB-C della SuperMini sul fronte
+//                torrette viti, presa USB-C di ricarica sul retro (fronte liscio)
 //   2  lid       fondo, entra nella scocca e si avvita (4x M3); interfaccia FISSA per il portaschede
 //                (4 fori svasati)
-//   3  sled      portaschede intercambiabile (file portaschede.scad): millefori unica 8x20 con la ESP32-S3
-//                SuperMini saldata sopra, modulo TP4056, portabatteria 18650 stampato, tasca del connettore
-//                volante. Si avvita al fondo dal basso (4x M3)
+//   3  sled      portaschede intercambiabile (file portaschede.scad): corsia libera con 3 nervature per il pacco
+//                elettronico (millefori 8x20 + SuperMini, isolata, NON fissata), modulo TP4056, portabatteria
+//                18650 stampato, tasca del connettore volante. Si avvita al fondo dal basso (4x M3)
 //   4  panel x2  pannelli laterali a feritoie, si incastrano a scatto
 //   5  knob      manopola zigrinata (stile ottone), sede a pressione per albero zigrinato 18 denti
 //   6  collar    anello decorativo attorno alla manopola (solo se led_ring = false)
@@ -19,9 +19,9 @@
 //  COMPONENTI PREVISTI (quote in dimensioni.md)
 //   - encoder EC11E (bussola M7x0.75, albero 6 mm zigrinato 18 denti, 20 mm dal piano di appoggio)
 //   - (pulsante PBS-110 ELIMINATO il 2026-10-14: play/pausa e gesti col pulsante integrato dell'encoder)
-//   - millefori 8x20 (22,54 x 60) con ESP32-S3 SuperMini, modulo TP4056 USB-C, cella 18650 + contatti a molla/piastrina
+//   - pacco millefori 8x20 (22,54 x 60) + ESP32-S3 SuperMini in guaina (libero), modulo TP4056 USB-C, cella 18650 + contatti
 //   - 8x viti M3x8 svasate autofilettanti (4 fondo->scocca, 4 fondo->portaschede)
-//   - 2x viti M3x6 testa bassa (millefori->portaschede), 4x viti M2x5 autofilettanti (TP4056)
+//   - 4x viti M2x5 autofilettanti (TP4056)
 //   - anello LED WS2812B 16 LED (sotto la faccia superiore, a scatto); modulo vibrazione (sotto la faccia
 //     superiore, davanti all'anello, a incastro sulla scocca)
 //
@@ -74,7 +74,7 @@ pilot_depth = 12;
 csk_d1 = 6.4;  csk_d2 = 3.4;  csk_h = 1.7;   // svasatura viti M3 a testa piana
 
 // ----------------------------------------------------------------------
-//  INTERFACCIA FONDO <-> PORTASCHEDE (fissa: vedi dimensioni.md). RST/BOOT: nessun foro (2026-10-15), si accede a scheda aperta
+//  INTERFACCIA FONDO <-> PORTASCHEDE (fissa: vedi dimensioni.md). RST/BOOT: nessun foro (2026-10-15)
 // ----------------------------------------------------------------------
 sled_t    = 2.8;                                     // spessore piastra portaschede (sopra il fondo)
 sled_scr  = [[-27,-35], [27,-35], [-12,43], [12,43]]; // 4 viti M3 dal basso (centri, coordinate X,Y)
@@ -221,10 +221,6 @@ py = BL/2 - Rp + post_off*sin(45);
 include <portaschede.scad>
 include <componenti.scad>
 
-// finestra sul FRONTE per la USB-C della SuperMini (flash del firmware): centro = presa sulla millefori (portaschede.scad,
-// da includere prima: OpenSCAD valuta le assegnazioni in ordine). 14,5 x 8,5 per far passare anche spine con guscio grosso (normale ~12 x 6,5, angoli vivi)
-fusb_x = mf_usb_x;  fusb_z = mf_usb_z;  fusb_w = 14.5;  fusb_h = 8.5;  fusb_r = 2.5;
-
 // ======================================================================
 //  UTILITA'
 // ======================================================================
@@ -330,9 +326,6 @@ module body() {
         // --- presa cavo sul retro
         translate([usb_x, BL/2+1, usb_z]) rotate([90,0,0])
             linear_extrude(wall+3) rr2d(usb_w, usb_h, usb_r);
-        // --- finestra USB-C della SuperMini sul fronte
-        translate([fusb_x, -BL/2 + wall + 2, fusb_z]) rotate([90,0,0])
-            linear_extrude(wall+3) rr2d(fusb_w, fusb_h, fusb_r);
     }
     // bracci a scatto dell'anello LED (radicati nel fondo delle tasche)
     if (led_ring) top_frame() translate([K.x, K.y, 0]) lr_arms();
