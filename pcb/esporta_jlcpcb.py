@@ -10,7 +10,7 @@ KCLI = os.environ.get("KICAD_CLI", r"C:\Users\fnico\AppData\Local\Programs\KiCad
 PCB = os.path.join(QUI, "kicad", "youtube_controller.kicad_pcb")
 OUT = os.path.join(QUI, "jlcpcb")
 # correzione di rotazione KiCad -> libreria JLCPCB (DA VERIFICARE nell'anteprima JLCPCB)
-ROT_OFF = {"SOT-23": 180, "D_SMA": 0, "R_0805": 0, "C_0805": 0, "C_1206": 0}
+ROT_OFF = {"SOT-23": 90, "D_SMA": 0, "R_0805": 0, "C_0805": 0, "C_1206": 0}
 
 def run(*a):
     subprocess.run([KCLI, *a], check=True, stdout=subprocess.DEVNULL)
