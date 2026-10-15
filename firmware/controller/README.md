@@ -45,7 +45,7 @@ Come la tabella in `../README.md`, con queste scelte dove non era definito:
 - all'avvio: 1 LED blu che gira finché l'iPad non si collega (massimo 60 s);
 - OTA pronto (WiFi di casa collegato, pagina disponibile): viola tenue con 1 LED bianco che gira;
 - uscita da OTA / portale: 2 lampi bianchi tenui + vibrazione 50 ms, poi riavvio;
-- nessuna vibrazione sulla rotazione (`VIB_SU_SCATTO` in `config.h`).
+- vibrazione sempre a **piena potenza** (duty 255, PWM 20 kHz) e **mai sotto 60 ms** (`VIB_MIN_MS`): più corti il motore non parte; impulso di 60 ms a ogni scatto (almeno 110 ms tra due, `VIB_SU_SCATTO`) e alla pressione del pulsante (`VIB_SU_PRESSIONE`), come in `test_comandi`.
 - L'interruttore dell'anello (GPIO9) viene comandato già ora; sul banco l'anello è al 5V e non cambia nulla.
 
 ## BLE
@@ -53,8 +53,13 @@ Come la tabella in `../README.md`, con queste scelte dove non era definito:
 - Nome **"YouTube Controller"**, aspetto "tastiera", abbinamento **Just Works** (nessun PIN), bonding salvato in NVS: dopo un riavvio l'iPad si ricollega da solo.
 - Report: 8 byte (modificatori, riservato, 6 tasti), Report ID 1; ogni tasto = pressione e rilascio subito dopo.
 - Batteria: livello fisso 100% (`BLE_BATTERIA_SIMULATA`) finché il partitore non è collegato.
-- In **OTA e portale la tastiera è sospesa** (iPad scollegato, niente pubblicità; log `BLE SOSPESO`): radio e memoria al WiFi/TLS. Si esce sempre con un riavvio, che riavvia il BLE pulito.
-- Per riabbinare da zero: su iPad "Dimentica dispositivo"; se l'iPad non si ricollega, cancellare anche il bonding sulla scheda (oggi: `arduino-cli` con "Erase All Flash" o un futuro comando).
+- Servizi HID costruiti a mano (non con `BLEHIDDevice` del core): report map, Input/Output Report e Protocol Mode accessibili **solo su link cifrato** (`READ_ENC`/`WRITE_ENC`), come `NimBLEHIDDevice` usato da ESP32-BLE-Keyboard di T-vK; il server chiede la cifratura alla connessione. Diagnostica: `BLE SICUREZZA ok cifrato=1 bond=1`, `BLE NOTIFICHE on` (CCCD dell'Input Report scritto dall'iPad); senza notifiche i tasti risultano `NON_SOTTOSCRITTO`.
+- **BLE e WiFi non convivono**: con NimBLE inizializzato la scansione WiFi manda l'S3 in panic (Interrupt WDT, provato). I gesti OTA / azzera WiFi inviano F13 / F15, salvano la richiesta in RAM RTC e **riavviano senza BLE** (`INFO riavvio in modalita_rete ...`, poi `BLE SOSPESO modalita_rete`). Si esce sempre con un riavvio, che riaccende il BLE.
+- Dopo ogni cambio della struttura GATT (come il 2026-10-14): su iPad **"Dimentica questo dispositivo"** e riabbinare, altrimenti iOS usa la struttura memorizzata e non riceve i tasti. Se non si ricollega, cancellare anche il bonding sulla scheda (oggi: "Erase All Flash" via cavo).
+
+## Comandi di debug da seriale
+
+Una lettera inviata sulla seriale (es. dalla console di Arduino IDE): `O` = gesto OTA, `R` = gesto azzera WiFi, `Q` = esci dalla modalità rete. Servono a provare i percorsi senza la manopola.
 
 ## WiFi, portale, OTA
 
@@ -77,8 +82,11 @@ Una riga per evento, campi separati da spazi, prefisso stabile in testa. Mai pas
 | `ENC <+1\|-1> <pos> <livello> <scatti/s>` | scatto; livello 0 = pulsante premuto (nessun tasto) |
 | `BTN 1` / `BTN 0 <ms>` | pressione / rilascio con durata |
 | `GESTO BREVE\|MEDIA\|LUNGA\|OTA\|RESET_WIFI\|ANNULLATO [dettaglio]` | gesto riconosciuto |
-| `TASTO <nome> INVIATO\|NON_COLLEGATO <in coda>` | tasto uscito dalla coda (Spazio, L, Sinistra, Shift+Destra, Alt+Sinistra, F13...) |
-| `BLE PUBBLICITA <nome>` / `BLE CONNESSO` / `BLE DISCONNESSO` / `BLE SOSPESO` | stato della tastiera |
+| `TASTO <nome> INVIATO\|NON_COLLEGATO\|NON_SOTTOSCRITTO <in coda>` | tasto uscito dalla coda (Spazio, L, Sinistra, Shift+Destra, Alt+Sinistra, F13...) |
+| `BLE PUBBLICITA <nome>` / `BLE CONNESSO` / `BLE DISCONNESSO` / `BLE SOSPESO modalita_rete` | stato della tastiera |
+| `BLE SICUREZZA ok cifrato=<0/1> bond=<0/1>` / `BLE SICUREZZA errore <codice>` | esito della cifratura / abbinamento |
+| `BLE NOTIFICHE on\|off <valore CCCD>` | l'iPad ha abilitato / disabilitato le notifiche dell'Input Report |
+| `VIB <ms>` | impulso di vibrazione |
 | `WIFI SPENTO\|CONNESSIONE <ssid>\|CONNESSO <ip> <rssi>\|ERRORE <motivo>\|SALVATO <ssid>\|AZZERATO\|NON_CONFIGURATO` | WiFi di casa |
 | `PORTALE APERTO <url> <motivo> <ssid>` / `PORTALE SCANSIONE <n>` / `PORTALE CHIUSO <motivo>` | rete di configurazione |
 | `OTA INGRESSO\|PRONTO <url> <url_mdns>\|CONTROLLO\|VERSIONE <remota> <locale>\|NESSUN_AGGIORNAMENTO\|SCARICO <%>\|CARICAMENTO <%>\|RIUSCITO\|ERRORE <motivo>\|USCITA <motivo>\|CONVALIDATA` | aggiornamento |

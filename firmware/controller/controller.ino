@@ -54,7 +54,11 @@ static void scatto(int dir, unsigned long adesso) {
   if (reteAttiva()) return;  // in OTA / portale la manopola non invia tasti
   tastiAccoda(tastoFreccia(dir, liv));
   effettoScia(posizione, dir, liv);
-  if (VIB_SU_SCATTO) vibra(40);
+  static unsigned long vibUltimoScatto = 0;
+  if (VIB_SU_SCATTO && adesso - vibUltimoScatto >= VIB_PAUSA_SCATTI) {
+    vibUltimoScatto = adesso;
+    vibra(VIB_SCATTO);
+  }
 }
 
 static void pressione() {
@@ -64,6 +68,7 @@ static void pressione() {
   contaScatti = 0;
   fase = 0;
   Serial.println("BTN 1");
+  if (VIB_SU_PRESSIONE) vibra(VIB_PULSANTE);
   if (reteAttiva()) reteAttivita();
 }
 
@@ -101,7 +106,7 @@ static void pulsanteTenuto(unsigned long adesso) {
   if (fase < 1 && d >= SOGLIA_MEDIA) {
     fase = 1;
     effetto(E_AMBRA4);
-    vibra(30);
+    vibra(VIB_MIN_MS);
   }
   if (fase < 2 && d >= SOGLIA_ZONA_MORTA) {
     fase = 2;
@@ -142,20 +147,51 @@ void setup() {
   const esp_partition_t *p = esp_ota_get_running_partition();
   esp_ota_img_states_t st;
   inProva = esp_ota_get_state_partition(p, &st) == ESP_OK && st == ESP_OTA_IMG_PENDING_VERIFY;
-  Serial.printf("INFO YTController %s app=%s reset=%s%s\n", FW_VERSION, p ? p->label : "?", motivoReset(),
-                inProva ? " IN_PROVA" : "");
+  Serial.printf("INFO YTController %s app=%s reset=%s build=%s_%s%s\n", FW_VERSION, p ? p->label : "?", motivoReset(),
+                __DATE__, __TIME__, inProva ? " IN_PROVA" : "");
 
   feedbackInizia();
   ingressiInizia();
   reteInizia();
-  bleInizia();
-  sfondo(E_NESSUNO);
-  effetto(E_BLE_ATTESA);
-  Serial.println("INFO pronto");
+  int modoRete = reteModoAlRiavvio();
+  if (modoRete) {
+    // OTA / portale: il BLE resta spento (con NimBLE attivo la scansione WiFi va in panic)
+    bleNonAvviare();
+    Serial.println("INFO pronto (modalita_rete)");
+    reteAvviaModo(modoRete);
+  } else {
+    bleInizia();
+    sfondo(E_NESSUNO);
+    effetto(E_BLE_ATTESA);
+    Serial.println("INFO pronto");
+  }
+}
+
+// Comandi di debug da seriale (una lettera + invio): simulano i gesti senza toccare la manopola.
+//   O = premuto + 5 scatti avanti (OTA)   R = premuto + 5 scatti indietro (azzera WiFi)   Q = uscita
+static void comandiSeriale() {
+  while (Serial.available()) {
+    char c = toupper(Serial.read());
+    if (c == 'O') { Serial.println("INFO debug: gesto OTA"); gesto("OTA", "seriale"); reteEntraOta(); }
+    else if (c == 'R') { Serial.println("INFO debug: gesto RESET_WIFI"); gesto("RESET_WIFI", "seriale"); reteAzzeraWifi(); }
+    else if (c == 'Q' && reteAttiva()) reteEsci("seriale");
+    else if (c == 'V') vibra(500);  // prova del motore: 500 ms a piena potenza
+    else if (c == 'H') {            // prova senza PWM: GPIO6 alto 500 ms con digitalWrite
+      Serial.println("VIB 500 digitalWrite");
+      ledcDetach(PIN_VIB);
+      pinMode(PIN_VIB, OUTPUT);
+      digitalWrite(PIN_VIB, HIGH);
+      delay(500);
+      digitalWrite(PIN_VIB, LOW);
+      ledcAttach(PIN_VIB, 20000, 8);
+      ledcWrite(PIN_VIB, 0);
+    }
+  }
 }
 
 void loop() {
   unsigned long adesso = millis();
+  comandiSeriale();
 
   int32_t nuova = encoderPosizione();
   while (posizione != nuova) scatto(nuova > posizione ? 1 : -1, adesso);
@@ -167,7 +203,7 @@ void loop() {
   pulsanteTenuto(adesso);
 
   int b = bleAggiorna();
-  if (b > 0) { effetto(E_BLE_CONN); vibra(50); }
+  if (b > 0) { effetto(E_BLE_CONN); vibra(VIB_MIN_MS); }
   else if (b < 0 && !bleSospesa()) effetto(E_BLE_DISC);
 
   tastiAggiorna(adesso);

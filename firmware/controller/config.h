@@ -4,7 +4,7 @@
 
 // Versione del firmware. In GitHub Actions si potra' passare -DFW_VERSION="x.y.z" dal tag della Release.
 #ifndef FW_VERSION
-#define FW_VERSION "0.1.0"
+#define FW_VERSION "0.1.2"
 #endif
 
 // ---- Pin (vedi firmware/README.md, "GPIO assegnati") ----
@@ -23,8 +23,13 @@ const unsigned long ANELLO_SPEGNI_DOPO = 2000;  // ms a nero prima di togliere l
 const bool LED_ANTIORARIO = true;           // LED numerati in senso antiorario visti dall'alto
 
 // ---- Vibrazione: impulsi a piena potenza (sotto ~30 ms o al 60% il motore non parte) ----
-const uint8_t VIB_DUTY = 255;
-const bool VIB_SU_SCATTO = false;           // README: nessuna vibrazione sulla rotazione
+const uint8_t VIB_DUTY = 255;               // sempre piena potenza
+const unsigned long VIB_MIN_MS = 60;        // impulsi piu' corti vengono allungati a 60 ms
+const bool VIB_SU_SCATTO = true;            // vibrazione a ogni scatto (richiesta dell'utente)
+const unsigned long VIB_SCATTO = 60;        // ms per scatto
+const unsigned long VIB_PAUSA_SCATTI = 110; // ms minimi tra due impulsi da scatto (giro veloce)
+const bool VIB_SU_PRESSIONE = true;         // impulso alla pressione del pulsante, come test_comandi
+const unsigned long VIB_PULSANTE = 60;
 
 // ---- Pulsante e gesti (ms) ----
 const unsigned long DEBOUNCE_MS = 30;

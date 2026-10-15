@@ -39,7 +39,7 @@ void feedbackInizia() {
   digitalWrite(PIN_ANELLO_ALIM, LOW);
   pinMode(PIN_VIB, OUTPUT);
   digitalWrite(PIN_VIB, LOW);
-  ledcAttach(PIN_VIB, 20000, 8);  // 20 kHz, non udibile
+  if (!ledcAttach(PIN_VIB, 20000, 8)) Serial.println("ERRORE vibrazione: ledcAttach non riuscito");  // 20 kHz
   ledcWrite(PIN_VIB, 0);
   anello.begin();
   anello.setBrightness(LUMINOSITA);
@@ -188,12 +188,18 @@ void vibra(unsigned long ms) {
   vibraSerie(1, ms, 0);
 }
 
+static void vibAccendi() {
+  ledcWrite(PIN_VIB, VIB_DUTY);
+  vibOn = true;
+  Serial.printf("VIB %lu\n", vibAcceso);
+}
+
 void vibraSerie(int n, unsigned long acceso, unsigned long spento) {
+  if (acceso < VIB_MIN_MS) acceso = VIB_MIN_MS;  // sotto ~60 ms il motore non parte o non si sente
   vibResto = n - 1;
   vibAcceso = acceso;
   vibSpento = spento;
-  ledcWrite(PIN_VIB, VIB_DUTY);
-  vibOn = true;
+  vibAccendi();
   vibFine = millis() + acceso;
 }
 
@@ -206,8 +212,7 @@ void feedbackAggiorna(unsigned long adesso) {
       vibFine = adesso + vibSpento;
     } else if (vibResto > 0) {
       vibResto--;
-      ledcWrite(PIN_VIB, VIB_DUTY);
-      vibOn = true;
+      vibAccendi();
       vibFine = adesso + vibAcceso;
     }
   }

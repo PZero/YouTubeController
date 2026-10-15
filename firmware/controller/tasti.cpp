@@ -53,8 +53,8 @@ static unsigned long ultimoInvio = 0;
 void tastoInvia(Tasto t) {
   uint8_t mod, usage;
   tastoHid(t, mod, usage);
-  bool ok = bleInviaTasto(mod, usage);
-  Serial.printf("TASTO %s %s %d\n", tastoNome(t), ok ? "INVIATO" : "NON_COLLEGATO", nCoda);
+  int r = bleInviaTasto(mod, usage);
+  Serial.printf("TASTO %s %s %d\n", tastoNome(t), r == 1 ? "INVIATO" : r == 2 ? "INVIATO_FORZATO" : r == 0 ? "NON_COLLEGATO" : r == -2 ? "ERRORE_NOTIFICA" : "NON_SOTTOSCRITTO", nCoda);
 }
 
 void tastiAccoda(Tasto t) {

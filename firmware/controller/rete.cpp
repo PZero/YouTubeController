@@ -260,9 +260,11 @@ static void avviaServer() {
 // ---------------- Stati ----------------
 static void apriPortale(const char *motivo) {
   if (dnsAvviato) { dns.stop(); dnsAvviato = false; }
-  WiFi.disconnect(true);
+  Serial.println("INFO portale: modo AP_STA");
   WiFi.mode(WIFI_AP_STA);
+  Serial.println("INFO portale: scansione");
   scansiona();
+  Serial.println("INFO portale: avvio AP");
   WiFi.softAPConfig(IP_AP, IP_AP, IPAddress(255, 255, 255, 0));
   if (!WiFi.softAP(nomeAp.c_str(), passwordAp().c_str())) {
     Serial.println("ERRORE PORTALE avvio rete non riuscito");
@@ -440,24 +442,57 @@ static bool preparaModo() {
   return true;
 }
 
+// Richiesta di modalita' rete che sopravvive al riavvio software (RAM RTC non inizializzata).
+static const uint32_t MAGICO = 0x59540000;
+enum { M_OTA = 1, M_PORTALE = 2 };
+RTC_NOINIT_ATTR static uint32_t richiestaModo;
+
+static void riavviaInModo(int modo, Effetto e) {
+  richiestaModo = MAGICO | modo;
+  Serial.printf("INFO riavvio in modalita_rete %s\n", modo == M_OTA ? "OTA" : "PORTALE");
+  Serial.flush();
+  effetto(e);
+  unsigned long t = millis();
+  while (millis() - t < 700) { feedbackAggiorna(millis()); delay(5); }
+  ESP.restart();
+}
+
+int reteModoAlRiavvio() {
+  uint32_t r = richiestaModo;
+  richiestaModo = 0;
+  if ((esp_reset_reason() == ESP_RST_SW) && (r & 0xFFFF0000) == MAGICO) return r & 0xFF;
+  return 0;
+}
+
+void reteAvviaModo(int modo) {
+  if (modo == M_OTA) {
+    sfondo(E_VIOLA);
+    connetti();
+  } else {
+    apriPortale("azzeramento");
+  }
+}
+
 void reteEntraOta() {
   if (reteAttiva() || !preparaModo()) return;
   Serial.println("OTA INGRESSO");
-  tastoInvia(T_F13);
-  bleSospendi();
-  sfondo(E_VIOLA);
-  effetto(E_VIOLA);
   vibra(300);
-  connetti();
+  if (!bleSospesa()) {
+    tastoInvia(T_F13);
+    riavviaInModo(M_OTA, E_VIOLA);  // non ritorna
+  }
+  reteAvviaModo(M_OTA);
 }
 
 void reteAzzeraWifi() {
   cancellaWifi();
   Serial.println("WIFI AZZERATO gesto");
-  if (!bleSospesa()) tastoInvia(T_F15);
-  bleSospendi();
-  effetto(E_SVUOTA_ROSSO);
   vibraSerie(3, 60, 100);
+  if (!bleSospesa()) {
+    tastoInvia(T_F15);
+    riavviaInModo(M_PORTALE, E_SVUOTA_ROSSO);  // non ritorna
+  }
+  effetto(E_SVUOTA_ROSSO);
   if (stato != R_PORTALE) apriPortale("azzeramento");
 }
 

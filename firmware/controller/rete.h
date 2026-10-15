@@ -11,6 +11,11 @@ StatoRete reteStato();
 bool reteAttiva();          // OTA o portale in corso: i gesti normali sono sospesi
 void reteAttivita();        // azzera il timeout di 5 min
 
-void reteEntraOta();        // gesto premuto + 5 scatti avanti
+// Modalita' rete richiesta prima del riavvio (0 = nessuna, 1 = OTA, 2 = portale): da leggere
+// in setup() PRIMA di avviare il BLE; se diversa da 0 il BLE non va avviato.
+int reteModoAlRiavvio();
+void reteAvviaModo(int modo);
+
+void reteEntraOta();       // gesto premuto + 5 scatti avanti
 void reteAzzeraWifi();      // gesto premuto + 5 scatti indietro
 void reteEsci(const char *motivo);  // uscita: riavvio pulito (BLE riparte)
