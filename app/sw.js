@@ -2,7 +2,7 @@
 // Le richieste verso YouTube/googleapis/ytimg NON vengono intercettate.
 // Strategia: rete prima (cosi' gli aggiornamenti arrivano subito), cache se offline.
 // Per forzare la pulizia delle vecchie cache: incrementa CACHE_VERSION.
-const CACHE_VERSION = 'ytc-v1.1.2';
+const CACHE_VERSION = 'ytc-v1.1.3';
 const SHELL = [
   './',
   'index.html',
@@ -29,7 +29,7 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE_VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -49,7 +49,8 @@ self.addEventListener('fetch', (e) => {
   if (url.pathname.includes('/test/')) return; // pagina di prova fase 0: non toccarla
 
   e.respondWith(
-    fetch(req)
+    // no-cache: riconvalida sempre col server (la cache HTTP di GitHub Pages dura 10 min)
+    fetch(req, { cache: 'no-cache' })
       .then((res) => {
         if (res.ok && res.type === 'basic') {
           const copy = res.clone();

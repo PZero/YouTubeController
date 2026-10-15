@@ -7,7 +7,7 @@ import { createPlayerController, playerErrorText, STATE } from './player.js';
 import { createFullscreen } from './fullscreen.js';
 import { createControls } from './controls.js';
 
-export const APP_VERSION = '1.1.2'; // allineare a CACHE_VERSION in sw.js
+export const APP_VERSION = '1.1.3'; // allineare a CACHE_VERSION in sw.js
 const LAST_KEY = 'ytc.last.v1';
 // Video caricato all'avvio quando non c'e' un ultimo video (primo avvio): pronto per provare il controller
 const DEFAULT_VIDEO = { id: 'aqz-KE-bpKQ', title: 'Big Buck Bunny', channel: 'Blender' };
@@ -108,6 +108,7 @@ function handleState(s) {
     playSession = false;
     if (settings.autoFullscreen && fs.on) fs.exit();
     saveLastPos();
+    applyUpdateIfIdle();
   }
 }
 
@@ -273,6 +274,31 @@ const last = loadJson(LAST_KEY, null);
 loadVideo(last && last.id ? last : DEFAULT_VIDEO, { autoplay: false }); // solo "cue", nessun avvio
 refocus();
 
+// ---------------- aggiornamenti ----------------
+// L'app installata nella Home non viene mai ricaricata (iPadOS la riprende dalla memoria):
+// a ogni ritorno in primo piano si chiede al service worker di cercare una versione nuova.
+// Quando la nuova versione prende il controllo, la pagina si ricarica, ma mai durante la riproduzione.
+let updatePending = false;
+function applyUpdateIfIdle() {
+  if (!updatePending || playSession) return;
+  updatePending = false;
+  saveLastPos();
+  location.reload();
+}
+
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-  navigator.serviceWorker.register('sw.js').catch(() => { /* offline non disponibile */ });
+  const hadController = !!navigator.serviceWorker.controller; // al primo avvio non c'e' nulla da aggiornare
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+    .then((reg) => {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+    })
+    .catch(() => { /* offline non disponibile */ });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;
+    updatePending = true;
+    if (playSession) toast('Aggiornamento pronto: si applica alla prossima pausa', 3500);
+    applyUpdateIfIdle();
+  });
 }
