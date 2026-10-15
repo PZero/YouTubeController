@@ -51,7 +51,7 @@
   .filtri label { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); }
   #log { font: 13px/1.5 ui-monospace, Consolas, monospace; height: 320px; overflow-y: auto; margin: 0; white-space: pre-wrap; color: var(--muted); }
   #log .GESTO { color: var(--text); font-weight: 600; } #log .TASTO { color: var(--accent); }
-  #log .ERRORE, #log .err { color: var(--err); } #log .OTA, #log .PORTALE, #log .WIFI, #log .BLE { color: var(--ok); }
+  #log .ERRORE, #log .err { color: var(--err); } #log .OTA, #log .PORTALE, #log .WIFI, #log .BLE { color: var(--ok); } #log .SOSPENSIONE { color: var(--warn); }
   #knob { transition: transform 80ms linear; transform-origin: 150px 150px; }
   .note { color: var(--muted); font-size: 13px; margin-top: 16px; }
 </style>
@@ -113,6 +113,7 @@
         <tr><td>WiFi</td><td id="wifi"><span class="badge b-off">spento</span></td></tr>
         <tr><td>Portale</td><td id="portale"><span class="badge b-off">chiuso</span></td></tr>
         <tr><td>OTA</td><td id="ota"><span class="badge b-off">inattivo</span></td></tr>
+        <tr><td>Sospensione</td><td id="sosp"><span class="badge b-off">attivo</span></td></tr>
         <tr><td>Vivo</td><td id="vivo">–</td></tr>
       </table>
     </div>
@@ -139,7 +140,7 @@ for (let i = 0; i < N; i++) {
   $('leds').appendChild(c); leds.push(c);
 }
 
-const PREFISSI = ['ENC', 'BTN', 'GESTO', 'TASTO', 'BLE', 'VIB', 'WIFI', 'PORTALE', 'OTA', 'INFO', 'ERRORE', 'VIVO', 'ALTRO'];
+const PREFISSI = ['ENC', 'BTN', 'GESTO', 'TASTO', 'BLE', 'SOSPENSIONE', 'VIB', 'WIFI', 'PORTALE', 'OTA', 'INFO', 'ERRORE', 'VIVO', 'ALTRO'];
 const attivi = new Set(PREFISSI.filter(p => p !== 'VIVO' && p !== 'VIB'));
 PREFISSI.forEach(p => {
   const l = document.createElement('label');
@@ -210,7 +211,7 @@ function log(t) {
 }
 
 const NOMI_GESTO = { BREVE: 'Breve', MEDIA: 'Media', LUNGA: 'Lunga', OTA: 'Aggiornamento', RESET_WIFI: 'Azzera WiFi', ANNULLATO: 'Annullato' };
-const DESC_GESTO = { BREVE: 'play / pausa (Spazio)', MEDIA: 'loop A-B (L)', LUNGA: 'standby (simulato)', OTA: 'premuto + 5 scatti avanti', RESET_WIFI: 'premuto + 5 scatti indietro', ANNULLATO: '' };
+const DESC_GESTO = { BREVE: 'play / pausa (Spazio)', MEDIA: 'loop A-B (L)', LUNGA: 'spegnimento (deep sleep)', OTA: 'premuto + 5 scatti avanti', RESET_WIFI: 'premuto + 5 scatti indietro', ANNULLATO: '' };
 
 function gestisci(riga) {
   const t = riga.trim();
@@ -279,7 +280,15 @@ function gestisci(riga) {
     case 'VIB':
       $('vib').textContent = `ultimo impulso ${p[1]} ms alle ${new Date().toLocaleTimeString('it-IT')}`;
       break;
+    case 'SOSPENSIONE':
+      if (p[1] === 'CONTO') $('sosp').innerHTML = badge(`spegnimento tra ${p[2]} s`, 'b-err') + ' (gira o premi per annullare)';
+      else if (p[1] === 'ANNULLATA') $('sosp').innerHTML = badge('annullata', 'b-ok');
+      else if (p[1] === 'ORA') $('sosp').innerHTML = badge('deep sleep: ' + (p[2] || ''), 'b-off') + ' la USB sparisce: premi 2 s per risvegliare';
+      else if (p[1] === 'RISVEGLIO') $('sosp').innerHTML = badge('risvegliato', 'b-ok');
+      else if (p[1] === 'ATTESA_RILASCIO') $('sosp').innerHTML = badge('rilascia il pulsante', 'b-warn');
+      break;
     case 'VIVO':
+      if (!/spegnimento/.test($('sosp').textContent)) $('sosp').innerHTML = badge('attivo', 'b-off');
       $('vivo').textContent = `${p[1]} s · non valide ${p[2]} · heap ${p[3]} KB`;
       break;
   }

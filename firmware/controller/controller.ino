@@ -1,4 +1,4 @@
-// YouTube Controller - firmware v0 (ESP32-S3 SuperMini)
+// YouTube Controller - firmware v0.1.x (ESP32-S3 SuperMini)
 // Encoder EC11E (A=GPIO4, B=GPIO5) + switch integrato (GPIO7), anello WS2812B 16 LED (GPIO2),
 // vibrazione (GPIO6), tastiera BLE HID, WiFi/portale/OTA attivati dai gesti.
 // Log su seriale USB: una riga per evento, prefissi stabili (vedi README.md in questa cartella).
@@ -9,6 +9,7 @@
 #include "tasti.h"
 #include "ble_tastiera.h"
 #include "rete.h"
+#include "sospensione.h"
 #include <esp_ota_ops.h>
 
 // Rollback OTA: la nuova immagine resta "in prova" finche' loop() non la convalida.
@@ -26,6 +27,27 @@ static int fase = 0;                    // 0 <0,7 s, 1 0,7-2 s, 2 2-10 s, 3 lung
 static int32_t posizione = 0;
 static unsigned long ultimoVivo = 0;
 
+// ---- Sospensione per inattivita' ----
+static unsigned long sospensioneDopo = SOSPENSIONE_DOPO;  // accorciabile da seriale (S / N)
+static unsigned long ultimaAttivita = 0;
+static bool contoAttivo = false;
+static int contoUltimo = -1;
+static bool ignoraPressione = false;  // pressione che ha annullato il conto o risvegliato: niente tasti
+
+// Attivita' dell'utente. Restituisce true se ha annullato il conto alla rovescia:
+// in quel caso lo scatto o la pressione serve solo a "svegliare" e non genera tasti.
+static bool attivita() {
+  ultimaAttivita = millis();
+  if (!contoAttivo) return false;
+  contoAttivo = false;
+  contoUltimo = -1;
+  Serial.println("SOSPENSIONE ANNULLATA");
+  sfondo(E_NESSUNO);
+  effettoFondo();
+  vibra(VIB_MIN_MS);
+  return true;
+}
+
 static void gesto(const char *nome, const char *extra = "") {
   Serial.printf("GESTO %s%s%s\n", nome, *extra ? " " : "", extra);
 }
@@ -33,6 +55,10 @@ static void gesto(const char *nome, const char *extra = "") {
 static void scatto(int dir, unsigned long adesso) {
   posizione += dir;
   if (reteAttiva()) reteAttivita();
+  if (attivita()) {
+    Serial.printf("ENC %+d %ld 0 0\n", dir, (long)posizione);
+    return;
+  }
 
   if (pulsantePremuto()) {
     Serial.printf("ENC %+d %ld 0 0\n", dir, (long)posizione);
@@ -68,12 +94,20 @@ static void pressione() {
   contaScatti = 0;
   fase = 0;
   Serial.println("BTN 1");
+  if (attivita()) ignoraPressione = true;
+  if (ignoraPressione) return;
   if (VIB_SU_PRESSIONE) vibra(VIB_PULSANTE);
   if (reteAttiva()) reteAttivita();
 }
 
 static void rilascio(unsigned long durata) {
   Serial.printf("BTN 0 %lu\n", durata);
+  attivita();
+  if (ignoraPressione) {
+    ignoraPressione = false;
+    gesto("ANNULLATO", "risveglio");
+    return;
+  }
   if (gestoFatto) return;
   if (rotatoInPressione) { gesto("ANNULLATO", "rotazione"); return; }
 
@@ -101,7 +135,7 @@ static void rilascio(unsigned long durata) {
 
 // Soglie raggiunte con il pulsante ancora premuto e nessuna rotazione
 static void pulsanteTenuto(unsigned long adesso) {
-  if (!pulsantePremuto() || rotatoInPressione || gestoFatto || reteAttiva()) return;
+  if (!pulsantePremuto() || rotatoInPressione || gestoFatto || reteAttiva() || ignoraPressione) return;
   unsigned long d = adesso - pulsanteInizio();
   if (fase < 1 && d >= SOGLIA_MEDIA) {
     fase = 1;
@@ -116,9 +150,7 @@ static void pulsanteTenuto(unsigned long adesso) {
     fase = 3;
     gestoFatto = true;
     gesto("LUNGA");
-    Serial.println("INFO STANDBY (simulato): deep sleep disattivato nel prototipo, F14 non inviato");
-    effetto(E_STANDBY);
-    vibra(300);
+    sospendiOra("pressione_lunga");  // non ritorna
   }
 }
 
@@ -142,6 +174,7 @@ void setup() {
   digitalWrite(PIN_VIB, LOW);          // motore fermo
   Serial.setTxTimeoutMs(0);            // senza monitor collegato la seriale non deve bloccare
   Serial.begin(115200);
+  bool risveglio = sospensioneRisveglio();  // se il risveglio non e' confermato torna a dormire qui
   delay(300);
 
   const esp_partition_t *p = esp_ota_get_running_partition();
@@ -162,19 +195,51 @@ void setup() {
   } else {
     bleInizia();
     sfondo(E_NESSUNO);
-    effetto(E_BLE_ATTESA);
+    if (risveglio) {
+      effetto(E_LAMPO);
+      vibra(VIB_MIN_MS);
+      ignoraPressione = true;  // la pressione di risveglio non genera Spazio / L
+    } else {
+      effetto(E_BLE_ATTESA);
+    }
     Serial.println("INFO pronto");
+  }
+  ultimaAttivita = millis();
+}
+
+// Autospegnimento: conto alla rovescia negli ultimi SOSPENSIONE_CONTO ms, poi deep sleep.
+static void controllaSospensione(unsigned long adesso) {
+  if (reteAttiva()) {  // mai durante OTA o portale
+    ultimaAttivita = adesso;
+    return;
+  }
+  unsigned long ferma = adesso - ultimaAttivita;
+  if (ferma >= sospensioneDopo) sospendiOra("inattivita");  // non ritorna
+  unsigned long conto = min(SOSPENSIONE_CONTO, sospensioneDopo);
+  if (ferma + conto < sospensioneDopo) return;
+  long restano = (long)(sospensioneDopo - ferma);  // ms
+  int led = (restano + 1999) / 2000;               // 16 -> 1, uno in meno ogni 2 s
+  contoAttivo = true;
+  if (led != contoUltimo) {
+    contoUltimo = led;
+    Serial.printf("SOSPENSIONE CONTO %d\n", led * 2);
+    effettoConto(led);
   }
 }
 
 // Comandi di debug da seriale (una lettera + invio): simulano i gesti senza toccare la manopola.
 //   O = premuto + 5 scatti avanti (OTA)   R = premuto + 5 scatti indietro (azzera WiFi)   Q = uscita
+//   S = sospensione dopo 40 s (conto da 32 s dopo 8 s fermo)   N = sospensione normale (5 min)
+//   Z = sospendi subito   V = vibrazione 500 ms   H = GPIO6 alto 500 ms senza PWM
 static void comandiSeriale() {
   while (Serial.available()) {
     char c = toupper(Serial.read());
     if (c == 'O') { Serial.println("INFO debug: gesto OTA"); gesto("OTA", "seriale"); reteEntraOta(); }
     else if (c == 'R') { Serial.println("INFO debug: gesto RESET_WIFI"); gesto("RESET_WIFI", "seriale"); reteAzzeraWifi(); }
     else if (c == 'Q' && reteAttiva()) reteEsci("seriale");
+    else if (c == 'S') { sospensioneDopo = 40000; ultimaAttivita = millis(); Serial.println("INFO debug: sospensione dopo 40 s"); }
+    else if (c == 'N') { sospensioneDopo = SOSPENSIONE_DOPO; ultimaAttivita = millis(); Serial.println("INFO debug: sospensione normale"); }
+    else if (c == 'Z') sospendiOra("seriale");
     else if (c == 'V') vibra(500);  // prova del motore: 500 ms a piena potenza
     else if (c == 'H') {            // prova senza PWM: GPIO6 alto 500 ms con digitalWrite
       Serial.println("VIB 500 digitalWrite");
@@ -208,6 +273,7 @@ void loop() {
 
   tastiAggiorna(adesso);
   reteAggiorna(adesso);
+  controllaSospensione(millis());
   feedbackAggiorna(millis());
 
   if (inProva && adesso > CONVALIDA_DOPO) {

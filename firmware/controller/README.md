@@ -33,7 +33,7 @@ Librerie: solo core `esp32:esp32` 3.3.x (BLE, WiFi, WebServer, DNSServer, ESPmDN
 | Breve (< 0,7 s) | Spazio | esce (riavvio) |
 | Media (0,7-2 s) | L | nulla |
 | 2-10 s | nulla (annullato) | nulla |
-| Lunga (≥ 10 s) | `INFO STANDBY (simulato)`: niente deep sleep nel prototipo | nulla |
+| Lunga (≥ 10 s) | spegnimento immediato (deep sleep, vedi Sospensione) | nulla |
 | Premuto + 5 scatti avanti | modalità OTA | - |
 | Premuto + 5 scatti indietro | azzera WiFi e apre il portale | azzera WiFi |
 
@@ -57,9 +57,17 @@ Come la tabella in `../README.md`, con queste scelte dove non era definito:
 - **BLE e WiFi non convivono**: con NimBLE inizializzato la scansione WiFi manda l'S3 in panic (Interrupt WDT, provato). I gesti OTA / azzera WiFi inviano F13 / F15, salvano la richiesta in RAM RTC e **riavviano senza BLE** (`INFO riavvio in modalita_rete ...`, poi `BLE SOSPESO modalita_rete`). Si esce sempre con un riavvio, che riaccende il BLE.
 - Dopo ogni cambio della struttura GATT (come il 2026-10-14): su iPad **"Dimentica questo dispositivo"** e riabbinare, altrimenti iOS usa la struttura memorizzata e non riceve i tasti. Se non si ricollega, cancellare anche il bonding sulla scheda (oggi: "Erase All Flash" via cavo).
 
+## Sospensione (v0.1.3)
+
+- **Autospegnimento** dopo `SOSPENSIONE_DOPO` = 5 min senza scatti né pressioni (anche con l'iPad collegato; mai in OTA o portale).
+- **Conto alla rovescia** negli ultimi 32 s: 16 LED rossi, uno si spegne ogni 2 s (`SOSPENSIONE CONTO <s>`). Uno scatto o una pressione lo annulla (`SOSPENSIONE ANNULLATA`, vibrazione 60 ms) e **non** genera tasti: serve solo a "svegliare".
+- **Spegnimento** (fine del conto o pressione ≥ 10 s): vibrazione 300 ms, anello nero, iPad disconnesso (`BLE SPENTO`), attesa del rilascio del pulsante, GPIO2 / GPIO6 / GPIO9 bassi mantenuti (`gpio_hold`), deep sleep con risveglio `ext1` su GPIO7 (pull-up RTC). Log `SOSPENSIONE ORA <motivo>`. In deep sleep **la USB sparisce**: per caricare firmware risvegliarlo (o premere RST).
+- **Risveglio**: premere lo switch e tenerlo **2 s** (`SOSPENSIONE RISVEGLIO`, lampo e vibrazione); se si rilascia prima torna subito a dormire senza accendere anello né BLE (`SOSPENSIONE RISVEGLIO_ANNULLATO`, di solito non visibile perché la USB non fa in tempo a comparire). La pressione di risveglio non genera Spazio / L; l'iPad si ricollega col bond salvato.
+- V1 senza transistor: l'anello è sempre alimentato e i 16 LED neri consumano comunque ~10-16 mA in deep sleep (da misurare): accettato per ora.
+
 ## Comandi di debug da seriale
 
-Una lettera inviata sulla seriale (es. dalla console di Arduino IDE): `O` = gesto OTA, `R` = gesto azzera WiFi, `Q` = esci dalla modalità rete. Servono a provare i percorsi senza la manopola.
+Una lettera inviata sulla seriale (es. dalla console di Arduino IDE): `O` = gesto OTA, `R` = gesto azzera WiFi, `Q` = esci dalla modalità rete, `S` = sospensione dopo 40 s (dopo 8 s fermo parte il conto da 32 s), `N` = sospensione normale (5 min), `Z` = sospendi subito, `V` = vibrazione 500 ms, `H` = GPIO6 alto 500 ms senza PWM. Servono a provare i percorsi senza la manopola.
 
 ## WiFi, portale, OTA
 
@@ -87,6 +95,8 @@ Una riga per evento, campi separati da spazi, prefisso stabile in testa. Mai pas
 | `BLE SICUREZZA ok cifrato=<0/1> bond=<0/1>` / `BLE SICUREZZA errore <codice>` | esito della cifratura / abbinamento |
 | `BLE NOTIFICHE on\|off <valore CCCD>` | l'iPad ha abilitato / disabilitato le notifiche dell'Input Report |
 | `VIB <ms>` | impulso di vibrazione |
+| `SOSPENSIONE CONTO <s>\|ANNULLATA\|ORA <motivo>\|ATTESA_RILASCIO\|RISVEGLIO\|RISVEGLIO_ANNULLATO` | autospegnimento e risveglio |
+| `BLE SPENTO` | iPad disconnesso prima del deep sleep |
 | `WIFI SPENTO\|CONNESSIONE <ssid>\|CONNESSO <ip> <rssi>\|ERRORE <motivo>\|SALVATO <ssid>\|AZZERATO\|NON_CONFIGURATO` | WiFi di casa |
 | `PORTALE APERTO <url> <motivo> <ssid>` / `PORTALE SCANSIONE <n>` / `PORTALE CHIUSO <motivo>` | rete di configurazione |
 | `OTA INGRESSO\|PRONTO <url> <url_mdns>\|CONTROLLO\|VERSIONE <remota> <locale>\|NESSUN_AGGIORNAMENTO\|SCARICO <%>\|CARICAMENTO <%>\|RIUSCITO\|ERRORE <motivo>\|USCITA <motivo>\|CONVALIDATA` | aggiornamento |

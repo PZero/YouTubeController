@@ -15,4 +15,6 @@ int bleInviaTasto(uint8_t modificatore, uint8_t usage);
 void bleBatteria(uint8_t percento);
 // Avvio in modalita' rete (OTA / portale): il BLE non viene inizializzato.
 void bleNonAvviare();
+// Disconnessione pulita dell'iPad e stop della pubblicita' (prima del deep sleep).
+void bleSpegni();
 bool bleSospesa();  // true se il BLE non e' attivo

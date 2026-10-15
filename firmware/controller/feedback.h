@@ -25,6 +25,7 @@ enum Effetto : uint8_t {
   E_OTA_PRONTO,   // viola tenue + 1 LED bianco che gira (pagina OTA pronta)
   E_PORTALE,      // viola e bianco alternati lenti (rete di configurazione aperta)
   E_PROGRESSO,    // barra viola: LED accesi = % (parametro)
+  E_CONTO,        // conto alla rovescia della sospensione: N LED rossi (parametro)
 };
 
 void feedbackInizia();
@@ -33,6 +34,9 @@ void feedbackAggiorna(unsigned long adesso);
 void effetto(Effetto e);
 void effettoScia(long posizione, int dir, int livello);
 void effettoProgresso(int percento);
+void effettoConto(int ledAccesi);
+// Anello nero subito e motore fermo (prima del deep sleep).
+void feedbackSpegniTutto();
 // Sfondo (stato della modalita'): mostrato quando non c'e' un effetto temporaneo.
 void sfondo(Effetto e);
 // Interrompe l'effetto in primo piano e torna allo sfondo.

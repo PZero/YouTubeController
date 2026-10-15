@@ -70,6 +70,19 @@ void effettoScia(long posizione, int dir, int livello) {
   effetto(E_SCIA);
 }
 
+void effettoConto(int n) {
+  progresso = n;
+  if (attuale != E_CONTO) effetto(E_CONTO);
+  forza = true;
+}
+
+void feedbackSpegniTutto() {
+  ledcWrite(PIN_VIB, 0);
+  anello.clear();
+  anello.show();
+  attuale = fondo = E_NESSUNO;
+}
+
 void effettoProgresso(int p) {
   progresso = p;
   if (attuale != E_PROGRESSO) effetto(E_PROGRESSO);
@@ -167,6 +180,9 @@ static bool disegna(unsigned long t) {
     case E_PORTALE:
       anello.fill((t / 1000) % 2 == 0 ? col(150, 0, 255) : col(100, 100, 100));
       break;
+    case E_CONTO:
+      for (int i = 0; i < progresso && i < NUM_LED; i++) anello.setPixelColor(led(i), col(200, 0, 0));
+      break;
     case E_PROGRESSO: {
       int n = (progresso * NUM_LED + 50) / 100;
       for (int i = 0; i < NUM_LED; i++) anello.setPixelColor(led(i), i < n ? col(150, 0, 255) : col(15, 0, 25));
@@ -177,7 +193,7 @@ static bool disegna(unsigned long t) {
 }
 
 static bool animato(Effetto e) {
-  return e != E_NESSUNO && e != E_ZONA_MORTA && e != E_AMBRA4 && e != E_VIOLA && e != E_PROGRESSO;
+  return e != E_NESSUNO && e != E_ZONA_MORTA && e != E_AMBRA4 && e != E_VIOLA && e != E_PROGRESSO && e != E_CONTO;
 }
 
 static unsigned long vibFine = 0, vibAcceso = 0, vibSpento = 0;

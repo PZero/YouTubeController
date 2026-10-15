@@ -257,4 +257,15 @@ void bleNonAvviare() {
   Serial.println("BLE SOSPESO modalita_rete (riparte al prossimo riavvio)");
 }
 
+void bleSpegni() {
+  if (!server) return;
+  sospesa = true;
+  server->advertiseOnDisconnect(false);
+  BLEDevice::stopAdvertising();
+  for (auto &p : server->getPeerDevices(false)) server->disconnect(p.first);
+  unsigned long t = millis();
+  while (collegato && millis() - t < 500) delay(10);
+  Serial.println("BLE SPENTO");
+}
+
 bool bleSospesa() { return sospesa || !server; }

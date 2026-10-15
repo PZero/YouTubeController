@@ -4,7 +4,7 @@
 
 // Versione del firmware. In GitHub Actions si potra' passare -DFW_VERSION="x.y.z" dal tag della Release.
 #ifndef FW_VERSION
-#define FW_VERSION "0.1.2"
+#define FW_VERSION "0.1.3"
 #endif
 
 // ---- Pin (vedi firmware/README.md, "GPIO assegnati") ----
@@ -35,7 +35,12 @@ const unsigned long VIB_PULSANTE = 60;
 const unsigned long DEBOUNCE_MS = 30;
 const unsigned long SOGLIA_MEDIA = 700;     // < 0,7 s breve
 const unsigned long SOGLIA_ZONA_MORTA = 2000;  // 0,7-2 s media, 2-10 s nulla
-const unsigned long SOGLIA_LUNGA = 10000;   // >= 10 s standby
+const unsigned long SOGLIA_LUNGA = 10000;   // >= 10 s spegnimento immediato (deep sleep)
+
+// ---- Sospensione (deep sleep) ----
+const unsigned long SOSPENSIONE_DOPO = 300000;  // 5 min senza scatti ne' pressioni (anche con iPad collegato)
+const unsigned long SOSPENSIONE_CONTO = 32000;  // ultimi 32 s: 16 LED rossi, uno si spegne ogni 2 s
+const unsigned long RISVEGLIO_CONFERMA = 2000;  // il pulsante deve restare premuto 2 s dal risveglio
 const int SCATTI_GESTO = 5;                 // premuto + 5 scatti = OTA / azzera WiFi
 
 // ---- Velocita' della manopola (scatti/s) ----
