@@ -7,8 +7,10 @@ import { createPlayerController, playerErrorText, STATE } from './player.js';
 import { createFullscreen } from './fullscreen.js';
 import { createControls } from './controls.js';
 
-export const APP_VERSION = '1.0.0'; // allineare a CACHE_VERSION in sw.js
+export const APP_VERSION = '1.1.1'; // allineare a CACHE_VERSION in sw.js
 const LAST_KEY = 'ytc.last.v1';
+// Video caricato all'avvio quando non c'e' un ultimo video (primo avvio): pronto per provare il controller
+const DEFAULT_VIDEO = { id: 'aqz-KE-bpKQ', title: 'Big Buck Bunny', channel: 'Blender' };
 
 let current = null;        // { id, title, channel, thumb, duration }
 let results = [];
@@ -262,7 +264,7 @@ document.addEventListener('click', (e) => {
 $('appVersion').textContent = 'Versione ' + APP_VERSION;
 renderLists();
 const last = loadJson(LAST_KEY, null);
-if (last && last.id) loadVideo(last, { autoplay: false }); // solo "cue", nessun avvio
+loadVideo(last && last.id ? last : DEFAULT_VIDEO, { autoplay: false }); // solo "cue", nessun avvio
 refocus();
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
