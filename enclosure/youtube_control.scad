@@ -4,11 +4,12 @@
 //  PEZZI:
 //   1  body      scocca 105x70 (3:2), piano superiore inclinato, spigoli arrotondati, finestre/condotti di
 //                raffreddamento, foro manopola, sede RIGIDA del modulo vibrazione sotto la faccia superiore,
-//                torrette viti, presa USB-C di ricarica sul retro
+//                torrette viti, presa USB-C di ricarica sul retro, finestra USB-C della SuperMini sul fronte
 //   2  lid       fondo, entra nella scocca e si avvita (4x M3); interfaccia FISSA per il portaschede
-//                (4 fori svasati + fori per spillo RST/BOOT)
-//   3  sled      portaschede intercambiabile (file portaschede.scad): ESP32-S3 SuperMini capovolta,
-//                modulo TP4056, portabatteria 18650 stampato. Si avvita al fondo dal basso (4x M3)
+//                (4 fori svasati)
+//   3  sled      portaschede intercambiabile (file portaschede.scad): millefori unica 8x20 con la ESP32-S3
+//                SuperMini saldata sopra, modulo TP4056, portabatteria 18650 stampato, tasca del connettore
+//                volante. Si avvita al fondo dal basso (4x M3)
 //   4  panel x2  pannelli laterali a feritoie, si incastrano a scatto
 //   5  knob      manopola zigrinata (stile ottone), sede a pressione per albero zigrinato 18 denti
 //   6  collar    anello decorativo attorno alla manopola (solo se led_ring = false)
@@ -18,11 +19,11 @@
 //  COMPONENTI PREVISTI (quote in dimensioni.md)
 //   - encoder EC11E (bussola M7x0.75, albero 6 mm zigrinato 18 denti, 20 mm dal piano di appoggio)
 //   - (pulsante PBS-110 ELIMINATO il 2026-10-14: play/pausa e gesti col pulsante integrato dell'encoder)
-//   - ESP32-S3 SuperMini, modulo TP4056 USB-C, cella 18650 + contatti a molla/piastrina
+//   - millefori 8x20 (22,54 x 60) con ESP32-S3 SuperMini, modulo TP4056 USB-C, cella 18650 + contatti a molla/piastrina
 //   - 8x viti M3x8 svasate autofilettanti (4 fondo->scocca, 4 fondo->portaschede)
-//   - 4x viti M2x5 autofilettanti (TP4056)
+//   - 2x viti M3x6 testa bassa (millefori->portaschede), 4x viti M2x5 autofilettanti (TP4056)
 //   - anello LED WS2812B 16 LED (sotto la faccia superiore, a scatto); modulo vibrazione (sotto la faccia
-//     superiore, davanti all'anello, a incastro sulla scocca); schedina millefori (sul portaschede)
+//     superiore, davanti all'anello, a incastro sulla scocca)
 //
 //  mode  = "print"     -> piatti di stampa (plate = 1/2/3, 0 = tutti affiancati, solo anteprima)
 //          "assembly"  -> tutto montato (controllo incastri)
@@ -73,15 +74,10 @@ pilot_depth = 12;
 csk_d1 = 6.4;  csk_d2 = 3.4;  csk_h = 1.7;   // svasatura viti M3 a testa piana
 
 // ----------------------------------------------------------------------
-//  INTERFACCIA FONDO <-> PORTASCHEDE (fissa: vedi dimensioni.md)
+//  INTERFACCIA FONDO <-> PORTASCHEDE (fissa: vedi dimensioni.md). RST/BOOT: nessun foro (2026-10-15), si accede a scheda aperta
 // ----------------------------------------------------------------------
 sled_t    = 2.8;                                     // spessore piastra portaschede (sopra il fondo)
 sled_scr  = [[-27,-35], [27,-35], [-12,43], [12,43]]; // 4 viti M3 dal basso (centri, coordinate X,Y)
-rst_xy    = [-16.55, -9.4];                          // foro spillo tasto RST della SuperMini
-boot_xy   = [ -7.55, -9.4];                          // foro spillo tasto BOOT (facoltativo)
-boot_hole = true;
-pin_d     = 1.8;                                     // foro spillo (graffetta ~1 mm)
-pin_cone  = 4.0;                                     // imbocco svasato dal basso
 
 // ----------------------------------------------------------------------
 //  PANNELLI LATERALI (raffreddamento) - sagoma a trapezio arrotondato:
@@ -225,6 +221,10 @@ py = BL/2 - Rp + post_off*sin(45);
 include <portaschede.scad>
 include <componenti.scad>
 
+// finestra sul FRONTE per la USB-C della SuperMini (flash del firmware): centro = presa sulla millefori (portaschede.scad,
+// da includere prima: OpenSCAD valuta le assegnazioni in ordine). 14,5 x 8,5 per far passare anche spine con guscio grosso (normale ~12 x 6,5, angoli vivi)
+fusb_x = mf_usb_x;  fusb_z = mf_usb_z;  fusb_w = 14.5;  fusb_h = 8.5;  fusb_r = 2.5;
+
 // ======================================================================
 //  UTILITA'
 // ======================================================================
@@ -330,6 +330,9 @@ module body() {
         // --- presa cavo sul retro
         translate([usb_x, BL/2+1, usb_z]) rotate([90,0,0])
             linear_extrude(wall+3) rr2d(usb_w, usb_h, usb_r);
+        // --- finestra USB-C della SuperMini sul fronte
+        translate([fusb_x, -BL/2 + wall + 2, fusb_z]) rotate([90,0,0])
+            linear_extrude(wall+3) rr2d(fusb_w, fusb_h, fusb_r);
     }
     // bracci a scatto dell'anello LED (radicati nel fondo delle tasche)
     if (led_ring) top_frame() translate([K.x, K.y, 0]) lr_arms();
@@ -363,22 +366,12 @@ module csk_hole(x, y) translate([x, y, 0]) {
     translate([0,0,-0.01]) cylinder(d1=csk_d1, d2=csk_d2, h=csk_h, $fn=32);   // svasatura
 }
 
-module pin_hole(p, label) translate([p.x, p.y, 0]) {
-    translate([0,0,-0.01]) cylinder(d=pin_d, h=lid_t+0.02, $fn=24);
-    translate([0,0,-0.01]) cylinder(d1=pin_cone, d2=pin_d, h=1.2, $fn=32);    // imbocco
-    // scritta sul lato esterno (specchiata: si legge guardando il fondo)
-    translate([0, -4.2, -0.01]) linear_extrude(0.41) mirror([1,0,0])
-        text(label, size=2.4, halign="center", valign="center", font=fnt);
-}
-
 module lid() {
     difference() {
         linear_extrude(lid_t)
             rr2d(BW-2*wall-2*lid_tol, BL-2*wall-2*lid_tol, Rp-wall-lid_tol);
         for (sx=[-1,1], sy=[-1,1]) csk_hole(sx*px, sy*py);        // viti scocca
         for (p = sled_scr) csk_hole(p.x, p.y);                     // viti portaschede
-        pin_hole(rst_xy, "RST");
-        if (boot_hole) pin_hole(boot_xy, "BOOT");
     }
 }
 

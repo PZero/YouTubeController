@@ -4,13 +4,13 @@ Modello parametrico della scatola (OpenSCAD 2021.01). Le misure dei componenti s
 
 ## File
 - `youtube_control.scad`: file principale (scocca con sede del modulo vibrazione, fondo, pannelli, manopola, anello decorativo, anelli di prova, piatti, assembly). Si apre e si esporta solo questo.
-- `portaschede.scad`: portaschede intercambiabile (SuperMini, TP4056, culla 18650). Incluso dal principale, non autonomo.
-- `componenti.scad`: modelli semplificati dei componenti (anche anello LED, modulo vibrazione, schedina millefori), solo per l'anteprima (`show_electronics`) e per i controlli di interferenza. Mai esportati.
-- `verifica_interferenze.scad`: controllo interferenze (`-D chk=1..20`), esito atteso nell'intestazione del file.
+- `portaschede.scad`: portaschede intercambiabile (millefori unica 8x20 con la SuperMini, TP4056, culla 18650, tasca del connettore volante). Incluso dal principale, non autonomo.
+- `componenti.scad`: modelli semplificati dei componenti (anche anello LED, modulo vibrazione, millefori con SuperMini, connettore volante), solo per l'anteprima (`show_electronics`) e per i controlli di interferenza. Mai esportati.
+- `verifica_interferenze.scad`: controllo interferenze (`-D chk=1..23`; 21 = connettore volante, 22 = spina USB-C nella finestra del fronte, 23 = tasca del connettore), esito atteso nell'intestazione del file.
 
 ## Parametri di uso
 - `mode = "print"` con `plate = 1 | 2 | 3 | 4` (0 = tutti affiancati, solo anteprima)
-- `led_ring = true` (anello LED + diffusore; `false` = anello decorativo `collar`); `diff_mode = "insert" | "mmu"`; `vt_on` (sede vibrazione sulla scocca), `mf_on` in `portaschede.scad` (`vib_on` = variante scartata sul portaschede); `"assembly"`; `"exploded"`.
+- `led_ring = true` (anello LED + diffusore; `false` = anello decorativo `collar`); `diff_mode = "insert" | "mmu"`; `vt_on` (sede vibrazione sulla scocca), `mf_on` in `portaschede.scad` (millefori + SuperMini + tasca connettore); `"assembly"`; `"exploded"`.
 - `part = "body" | "lid" | "sled" | "panel" | "knob" | "collar" | "diffuser" | "test_ring"`: esporta il singolo pezzo (ignora `plate`).
 - Esempio: `openscad -o piatto2.stl -D 'mode="print"' -D plate=2 youtube_control.scad` (render CGAL ~2-4 min).
 
@@ -21,7 +21,7 @@ Modello parametrico della scatola (OpenSCAD 2021.01). Le misure dei componenti s
 | 5 (prima) | anelli di prova, diffusore di prova, tassello con sede anello | GRIGIO | Anelli: infilare l'albero (1/2/3 tacche = gioco 0,05/0,10/0,15) e riportare il migliore in `knurl_fit`; tassello e diffusore: faccia a vista sul piatto |
 | 4 | diffusore (`diff_mode = "insert"`) | BIANCO (solo questo) | Faccia a vista sul piatto, 1 mm, 100 % riempimento, nessun supporto. Variante `"mmu"`: vedi sopra |
 | 1 | scocca | NERO | Piano superiore inclinato sul piatto, nessun supporto. Ponti brevi (fori, tasche dei ganci), labbri della sede vibrazione 1 mm. Brim 5 mm |
-| 2 | fondo, portaschede | NERO | Tutto in piano, nessun supporto. Svasature e scritte RST/BOOT sul lato a contatto col piatto |
+| 2 | fondo, portaschede | NERO | Tutto in piano, nessun supporto. Svasature sul lato a contatto col piatto |
 | 3 | manopola, 2 pannelli (anello decorativo solo se `led_ring = false`) | RAME | Manopola capovolta (faccia superiore sul piatto); pannelli con la faccia esterna sul piatto. Nessun supporto |
 
 Colori: scocca/fondo/portaschede neri (le parti interne spariscono, luce dell'anello e rame risaltano); manopola e pannelli in rame come unico accento. Pulsante PBS-110 eliminato il 2026-10-14: il pulsante e' quello integrato dell'encoder.
@@ -33,7 +33,8 @@ Esportazione per Bambu Studio / MakerWorld: `python enclosure/export/esporta.py`
 ## Minuteria da comprare
 - 8 viti M3x8 (o ST2,9x9,5) a testa svasata, autofilettanti per plastica: 4 fondo → scocca, 4 fondo → portaschede.
 - 4 viti M2x5 autofilettanti (o M1,6 se i fori del TP4056 sono < 2 mm) per il TP4056.
-- 1 coppia di contatti per 18650 (piastrina + molla, ~11 x 12 mm, spessore ≤ 0,6) oppure 2 fascette da 3,6 mm come ritegno.
+- 2 viti **M3x6** a testa bassa (ISO 7380 / DIN 7985, testa Ø5,5) per la millefori (più lunghe toccano il fondo). Strip maschio 2 x 1x9, connettore volante Dupont 2x5 maschio + femmina.
+- 1 coppia di contatti per 18650 (piastrina + molla, ~11 x 12 mm, spessore ≤ 0,6) e 1 fascetta da 3,6 mm come ritegno (dietro la millefori).
 - Dado M7 dell'encoder: già fornito con il componente. Biadesivo sottile o cianoacrilato (solo se il PCB della vibrazione è più sottile di 1,6).
 
 ## Montaggio
@@ -41,6 +42,6 @@ Esportazione per Bambu Studio / MakerWorld: `python enclosure/export/esporta.py`
 2. Diffusore: a scatto dall'alto nella corona attorno al foro encoder (si toglie spingendo dall'interno attraverso le finestre).
 3. Anello LED: LED verso l'alto, piazzole verso destra-retro (arco a 30°), spinto dall'interno fino allo scatto dei 4 ganci; fili già saldati.
 4. Encoder: dall'interno (passa nel foro dell'anello), dado M7 sulla faccia superiore, stretto senza esagerare (la spinta del pulsante non deve allentarlo né schiacciare il PLA); manopola a pressione sull'albero zigrinato fino a battere sulla punta (taglio dell'albero allargato leggermente se lasca).
-5. Portaschede: SuperMini capovolta (componenti verso il basso), lato antenna sotto i labbri, poi lato USB-C giù fino allo scatto dei ganci. TP4056 con 4 viti M2. Contatti 18650 nelle fessure delle testate, fili dai fori in basso (il filo + passa nel tunnel sotto il modulo vibrazione). Schedina millefori infilata dall'alto nelle guide (componenti verso il davanti).
-6. Connettore JST-PH scocca → schedina; portaschede avvitato al fondo (4 M3 dal basso); fondo + portaschede nella scocca, 4 M3 negli angoli.
-7. Primo caricamento firmware: con fondo e portaschede estratti la USB-C della SuperMini è libera (canalino nella piastra per la spina). Reset: spillo nel foro RST del fondo (BOOT nel foro accanto).
+5. Portaschede: TP4056 con 4 viti M2. Contatti 18650 nelle fessure delle testate, fili dai fori in basso. Millefori (SuperMini già saldata, 9 fili del codino e 4 fili verso il TP4056 già saldati): bordo destro inclinato sotto i 3 fermi a C della parete della culla, poi si abbassa il lato sinistro sulle 2 torrette e si avvitano le 2 M3x6. Fili del TP4056 alle piazzole, fascetta sulla cella.
+6. Connettore volante 2x5 (codino della millefori + cablaggio della scocca) innestato e **infilato in piedi nella tasca** dietro la culla (tacca bassa a sinistra per il mazzo del codino); portaschede avvitato al fondo (4 M3 dal basso); fondo + portaschede nella scocca, 4 M3 negli angoli.
+7. Primo caricamento firmware e aggiornamenti: cavo USB-C nella **finestra sul fronte** (14,5 x 8,5) diretto alla SuperMini; la ricarica resta sulla presa del retro. RST/BOOT non hanno fori: servono a scheda aperta (4 viti del fondo, fondo + portaschede estratti; i tasti sono in alto sulla SuperMini).

@@ -84,12 +84,10 @@ module battery_model() {
 }
 
 module sled_electronics() {
-    sm_frame() supermini_model();
     tp4056_model();
     battery_model();
     tp_screws_model();
-    if (vib_on) vib_model();
-    if (mf_on)  mf_model();
+    if (mf_on) { mf_model(); cn_model(); }
 }
 
 // anello LED WS2812B 16 LED (sistema del piano superiore, origine sull'asse K, z=0 faccia superiore)
@@ -122,31 +120,86 @@ module led_ring_env() {
     }
 }
 
-// [VARIANTE SCARTATA 2026-10-14, vib_on = false] modulo vibrazione sul portaschede: PCB in piedi contro la culla
-module vib_model() {
-    color(c_green) translate([vib_x - vt_w/2, vib_y0, vib_z0]) cube([vt_w, 1.6, vt_h]);
-    color(c_metal) translate([vib_x, vib_y0 + 1.6, vib_z0 + vt_h/2]) rotate([-90,0,0]) cylinder(d=10, h=vib_t - 1.6, $fn=40);
-    color(c_chip) translate([vib_x - 8, vib_y0 + 1.6, vib_z0 + vt_h - 6]) cube([3, 1.2, 3]);
-}
-module vib_env() translate([vib_x - vt_w/2, vib_y0, vib_z0]) cube([vt_w, vib_t, vt_h]);
+// ----------------------------------------------------------------------------------------------
+//  Millefori unica 8 x 20 (22,54 x 60) con la SuperMini saldata sopra: modello e inviluppi
+//  (coordinate scocca; interno: sistema millefori x/y/z, z = 0 faccia inferiore del PCB)
+// ----------------------------------------------------------------------------------------------
+module mf_frame() translate([mf_x0, mf_y0, mf_zb]) children();
+// SuperMini sulla strip: coordinate scheda (X dalla USB-C verso l'antenna, Y dalla fila 5V alla fila TX) -> millefori
+module mf_sm_frame() multmatrix([[0,-1,0,mf_sm_x],[1,0,0,mf_sm_y],[0,0,1,mf_t + mf_strip_h + sm_t],[0,0,0,1]]) children();
+function mf_cx(c) = mf_a1.x + c*mf_pitch;            // x del centro della colonna c (A = 0)
+function mf_ry(r) = mf_a1.y + (r - 1)*mf_pitch;      // y del centro della riga r
 
-// schedina millefori (coordinate scocca) con testata JST-PH (da definire: 3 o 8 poli)
-jst_n = 8;                                 // poli della testata sulla schedina (3 = solo anello; 8 = tutto il coperchio)
-jst_w = 2.0*(jst_n-1) + 3.9;  jst_d = 4.5;  jst_h = 6.0;   // B?B-PH-K-S (passo 2.0); +~4 spina e fili
+// strip maschio 2 x 1x9 + SuperMini (insieme usato nei controlli come "scheda")
+module mf_sm_all() mf_frame() {
+    color("#2b2b2b") for (c = [1, 7]) translate([mf_cx(c) - 1.27, mf_ry(1) - 1.27, mf_t]) cube([2.54, 9*2.54, mf_strip_h]);
+    mf_sm_frame() supermini_model();
+}
+
+// componenti dall'elenco di firmware/millefori/README.md: [colonna, riga, tipo, (colonna2, riga2)]
+// tipo: "r" resistenza in piedi (Ø2.4, h10), "e" elettrolitico 5x11 a cavallo di due fori, "c" ceramico (h6), "q" TO-92, "d" diodo
+mf_parts = [
+    [5,15,"e",4,15],   [7,20,"e",6,20],                                      // C1, C3
+    [3,15,"r"], [2,12,"r"], [4,12,"r"], [7,14,"r"], [1,16,"r"], [0,11,"r"],  // R1, R2, R3, R4, R5, R6
+    [0,14,"r"], [0,18,"r"], [0,15,"r"], [7,16,"r"], [5,17,"r"],              // R7, R8, R9, R10, R11
+    [0,3,"c",0,4], [7,18,"c",6,18],                                          // C2, C4
+    [7,11,"d"],                                                              // D1
+    [2,13,"q",4,13], [5,13,"q",7,13]                                         // Q2, Q1
+];
 module mf_model() {
-    color("#c8a95a") translate([mf_x0, mf_y0, mf_z0]) cube([mf_w, mf_t, mf_h]);
-    color("#2b2b2b") translate([mf_x0 + 2, mf_y0 - 5, mf_z0 + 4]) rotate([0,90,0]) cylinder(d=5, h=11, $fn=24);   // 100uF coricato
-    color(c_chip) translate([mf_x0 + 14, mf_y0 - 1.2, mf_z0 + 6]) cube([3, 1.2, 3]);                              // MOSFET
-    color("white") translate([mf_x0 + (mf_w - jst_w)/2, mf_y0 - jst_h, mf_z0 + mf_h - jst_d - 0.5]) cube([jst_w, jst_h, jst_d]);
+    mf_frame() {
+        color("#c8a95a") difference() {
+            cube([mf_w, mf_l, mf_t]);
+            for (h = mf_holes) translate([h.x, h.y, -1]) cylinder(d=mf_hole_d, h=mf_t + 2, $fn=24);
+        }
+        for (h = mf_holes) color(c_metal) translate([h.x, h.y, mf_t]) cylinder(d=mf_head_d, h=mf_head_h, $fn=24);
+        for (p = mf_parts) {
+            x1 = mf_cx(p[0]);  y1 = mf_ry(p[1]);
+            two = len(p) > 3;
+            x2 = two ? mf_cx(p[3]) : x1;  y2 = two ? mf_ry(p[4]) : y1;
+            xc = (x1 + x2)/2;  yc = (y1 + y2)/2;
+            translate([xc, yc, mf_t]) {
+                if (p[2] == "e") color("#2b2b2b") cylinder(d=5, h=11, $fn=24);
+                if (p[2] == "r") color("#b0a080") cylinder(d=2.4, h=10, $fn=12);
+                if (p[2] == "c") color("#c06020") cylinder(d=2.5, h=6, $fn=12);
+                if (p[2] == "d") color("#202020") cylinder(d=2.8, h=10, $fn=12);
+                if (p[2] == "q") color(c_chip) translate([-2.3, -1.8, 0]) cube([4.6, 3.6, 8]);
+            }
+        }
+    }
+    mf_sm_all();
 }
-module mf_env() {
-    translate([mf_x0, mf_y0, mf_z0]) cube([mf_w, mf_t, mf_h]);
-    translate([mf_x0 + mf_eng + 0.3, mf_y0 + mf_t - 0.01, mf_z0]) cube([mf_w - 2*(mf_eng + 0.3), mf_sold, mf_h]);   // saldature
-    // componenti: a >= mf_eng + 0.3 dai bordi laterali (le guide impegnano il bordo)
-    translate([mf_x0 + mf_eng + 0.3, mf_y0 - mf_comp, mf_z0]) cube([mf_w - 2*(mf_eng + 0.3), mf_comp + 0.01, mf_h]);
-    // fascia alta: testata JST con spina inserita (~10)
-    translate([mf_x0 + mf_eng + 0.3, mf_y0 - jst_h - 4, mf_hi_z]) cube([mf_w - 2*(mf_eng + 0.3), jst_h + 4, mf_z0 + mf_h - mf_hi_z]);
+
+// inviluppo della millefori SENZA SuperMini: PCB, lato saldature, teste delle viti e componenti per zone
+// (zona antenna x 4.8-17.8, y 24.2-32.5 libera; sopra la SuperMini nessun componente; colonna A bassa fino alla riga 10)
+module mf_env() mf_frame() {
+    cube([mf_w, mf_l, mf_t]);
+    difference() {                                                    // saldature e piedini sotto la scheda
+        translate([0.3, 0.3, -mf_sold]) cube([mf_w - 0.6, mf_l - 0.6, mf_sold + 0.01]);
+        for (h = mf_holes) translate([h.x, h.y, -mf_sold - 1]) cylinder(r = mf_boss_d/2 + 0.2, h = mf_sold + 2, $fn=24);
+        for (i = [0:len(mf_clip_rows)-1]) translate([mf_w - mf_clip_led - 0.2, mf_ry(mf_clip_rows[i]) + mf_clip_dy[i] - mf_clip_l/2 - 0.1, -mf_sold - 1]) cube([mf_clip_led + 1, mf_clip_l + 0.2, mf_sold + 2]);
+    }
+    for (h = mf_holes) translate([h.x, h.y, mf_t]) cylinder(d=mf_head_d, h=mf_head_h, $fn=24);   // teste delle viti
+    translate([4.8, 32.5, mf_t]) cube([13.0, mf_l - 32.5 - 0.8, mf_comp]);          // righe 12-20, colonne B-F
+    translate([2.0, 28, mf_t]) cube([2.6, mf_l - 28 - 0.8, mf_comp]);               // colonna A (R6, R7, R8, R9): corpi a x 2,3-4,7
+    difference() {                                                                   // colonne G-H (D1, Q1, R4, R10, C3, C4), senza i tratti dei fermi
+        translate([17.8, 28, mf_t]) cube([mf_w + 0.1 - 17.8, mf_l - 28 - 0.8, mf_comp]);
+        for (i = [0:len(mf_clip_rows)-1]) translate([mf_w - mf_clip_lip - 0.5, mf_ry(mf_clip_rows[i]) + mf_clip_dy[i] - 0.9, mf_t - 1]) cube([3, 1.8, 20]);
+    }
+    translate([2.0, 4, mf_t]) cube([2.6, 24, 6]);                                    // colonna A: C2 e fili (alti ~3-6)
 }
+// inviluppo della SuperMini con la strip (scheda + plastica + USB-C): per i controlli
+module mf_sm_env() mf_frame() {
+    for (c = [1, 7]) translate([mf_cx(c) - 1.27, mf_ry(1) - 1.27, mf_t]) cube([2.54, 9*2.54, mf_strip_h]);
+    mf_sm_frame() supermini_model();
+}
+// spina USB-C normale infilata nella presa: guscio 12 x 6.5 dalla faccia della presa verso l'esterno (25 mm), per controllare la finestra sul fronte
+plug_w = 12.0;  plug_h = 6.5;  plug_len = 25;
+module plug_env() translate([mf_usb_x - plug_w/2, mf_usb_y - plug_len - 0.01, mf_usb_z - plug_h/2]) cube([plug_w, plug_len, plug_h]);
+
+// connettore volante (coppia innestata 2 x 5, in piedi nella tasca): ingombro con 5 mm di curvatura dei fili in alto
+module cn_model() color("#d8d8d8") translate([cn_xi[0] + cn_c.x, cn_yi[0] + cn_c.y, sp_top]) cube([cn_w, cn_d, cn_h]);
+module cn_env()   translate([cn_xi[0] + cn_c.x, cn_yi[0] + cn_c.y, sp_top + 0.01]) cube([cn_w, cn_d, cn_h + 5]);
 
 // viti principali (coordinate scocca)
 module screw_m(d, l, head_d, csk=true) {
