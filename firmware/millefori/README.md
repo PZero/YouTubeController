@@ -1,179 +1,147 @@
-# Schedina millefori di interfaccia
+# Millefori unica 8 x 20 con la SuperMini saldata sopra
 
-Raccoglie tutto ciò che non è la SuperMini o il modulo 4056: interruttore dell'anello (Q1 S8550 + Q2 2N3904), resistenza del dato, condensatore di bulk, partitore della batteria, resistenze di lettura CHRG/STDBY e il connettore verso la scocca. Schema di riferimento: `firmware/README.md`, sezione "Schema dei collegamenti completo".
-
-Posizione (soluzione C del design-3d): **coricata sopra il modulo TP4056**, zona posteriore sinistra del portaschede, lato saldature verso il modulo.
+Decisione 2026-10-15: un'unica millefori **piatta nella corsia sinistra del portaschede** porta la ESP32-S3 SuperMini e tutta l'interfaccia: interruttore dell'anello (S8550 + 2N3904), 330 Ω sul dato, bulk dell'anello, partitore della batteria (GPIO1), letture CHRG/STDBY (GPIO8/10), **diodo Schottky OUT+ → pin 5V**, condensatori del motore, codino verso la scocca. La vecchia schedina 8 x 13 sopra il TP4056 è in [`archivio_8x13/`](archivio_8x13/README.md).
 
 File:
-- `millefori.py`: disposizione, piste, **verifica automatica** contro la netlist, generazione degli SVG (solo libreria standard). Tutte le quote incerte sono parametri in testa al file.
-- `lato_componenti.svg`: vista dall'alto, scala 1:1 + 4:1.
-- `lato_saldature.svg`: vista da sotto **specchiata** (colonne H…A), piste colorate per net con legenda, scala 1:1 + 4:1.
-
-Gli SVG si stampano al 100% (barra di controllo da 10 mm). Quelli nel repository sono della variante di default (connettore angolato, con chiave).
+- `millefori.py`: disposizione, piste, fili sotto la scheda, **verifica automatica** contro la netlist, SVG (solo libreria standard).
+- `lato_componenti.svg`, `lato_saldature.svg` (vista da sotto **specchiata**): scala 1:1 + 3:1, da stampare al 100% (barra di 10 mm).
 
 ```
-python millefori.py                       # variante di default: deve dare "VERIFICA OK"
-python millefori.py --connettore diritto  # fallisce di proposito: header diritto + spina = 16,5 mm > 12
-python millefori.py --senza-chiave        # pin 5 di J1 = terzo GND
-python millefori.py --pinout-q1 ECB       # mostra che un S8550 E-C-B non va montato così
+python millefori.py              # deve dare "VERIFICA OK"
+python millefori.py --specchia   # solo se la fila 5V/GND/3V3 della SuperMini risulta a SINISTRA (vedi sotto)
 ```
 
-La verifica controlla: ogni net connessa, nessun corto tra net, i due terminali di ogni resistenza/condensatore sulle net giuste, nessun foro usato due volte, piste solo tra piazzole adiacenti, fori di fissaggio e righe riservate liberi, nessuna collisione tra i corpi (in pianta), altezza ≤ 12 mm ovunque e ≤ 10 mm nella zona critica, elettrolitico nella metà anteriore e fuori dalla verticale del chip, lato saldature ≤ 2 mm. Gli SVG vengono riletti come XML per controllarne la validità.
+La verifica controlla: ogni net connessa e nessun corto, i due terminali di ogni resistenza/condensatore sulle net giuste, nessun foro usato due volte, piste solo tra piazzole adiacenti, piazzole libere sotto le teste delle viti M3, **zona antenna libera** (nessuna piazzola, pista o corpo), elettrolitici ad almeno 10 mm dall'antenna, nessuna collisione in pianta, nessun corpo sotto la SuperMini, altezze ≤ 16 mm, lato saldature ≤ 2 mm.
+
+## Taglio dalla 14 x 20 (40 x 60)
+
+- Tenere **20 righe** (tutta la lunghezza, 60 mm, lati corti intatti) e **8 colonne** adiacenti a **uno dei lati lunghi** (quello che resta intatto, con i suoi 2 fori M3).
+- Tagliare tra l'8ª e la 9ª colonna contando dal lato intatto, **a metà passo** (1,27 mm dai centri dell'8ª colonna): incidere più volte con il cutter su entrambe le facce lungo la fila di fori, spezzare, limare.
+- Risultato: **22,5 x 60 mm** (3,49 di margine sul lato intatto + 7 passi + 1,27). La corsia del portaschede è 21,5: **serve ~1 mm in più** (design-3d), oppure tagliare anche il lato intatto (20,3 mm) e rinunciare ai fori M3 (fissaggio con perni o fori M2 da ricavare: chiedere).
+- Faccia componenti: la basetta è a doppia faccia, quindi si sceglie la faccia in modo che, guardando dall'alto con la USB-C verso di sé (in basso), il **lato intatto sia a sinistra** (colonna A).
 
 ## Griglia e convenzioni
 
-- Millefori a piazzole singole, passo 2,54, **8 colonne (A…H) × 13 righe (1…13)**, taglio ~21 × 34 mm (`LARGH`, `LUNG`).
-- Vista dal lato componenti con l'**anteriore in basso**: riga 1 = bordo anteriore (connettore J1, verso encoder e SuperMini), riga 13 = posteriore (verso la USB-C del TP4056). A1 = angolo anteriore-sinistro.
-- **Zona critica** (verso l'encoder): angolo anteriore-destro 6 × 7 mm, componenti ≤ 10 mm (`ZONA_CRITICA`). Ci stanno solo J1 angolato (5,1) e il filo del pulsante.
-- **Zona del chip TP4056** (scalda in carica): centro in larghezza ±5 mm, metà posteriore (`ZONA_CHIP`). L'elettrolitico C1 sta nella metà anteriore, fuori da questa zona.
-- **Righe 12-13 riservate** (`RIGHE_RISERVATE`): nessun componente né pista. Ospitano i 2 fori posteriori, che devono coincidere con i fori lato USB-C del TP4056 (interasse non ancora misurato: `INTERASSE_TP_POST`, `CENTRO_TP_X`, `Y_FORI_TP_POST`). Qualunque interasse va bene finché i fori cadono in quelle righe.
-- Fori anteriori di fissaggio: A1 e H1 (`FISSAGGI`). Tutti i fori si allargano a Ø2,2 per viti M2.
-
-Mappa (stampata dallo script; `*` = foro su cui sta il corpo della resistenza in piedi, `~` = filo esterno, `-` = sola pista, `//` = riga riservata):
+Colonne A…H (A = lato intatto), righe 1…20 (riga 1 = anteriore, USB-C). Coordinate in mm dall'angolo **anteriore-sinistro** (lato componenti): x verso destra, y verso il posteriore. Centro di A1 = (3,49; 5,87), passo 2,54.
 
 ```
-            A        B        C        D        E        F        G        H
-  13  |   //      FISS      //       //       //       //      FISS      //    |  <- posteriore (USB-C TP4056)
-  12  |   //       //       //       //       //       //       //       //    |
-  11  | ~STDBY     R8*     -GND     -GND      R2*     -GND     C2.2     R11*   |
-  10  |    .       R8      -GND      Q2E      R2        .      C2.1      R11   |
-   9  | ~GPIO10    R9      -GND      Q2B      R1       R1*    ~GPIO9   ~GPIO1  |
-   8  |    .       R9*     -GND      Q2C       .        .       R10     R10*   |
-   7  |  ~3V3      R7*     -GND      R3*      R3       R4*      R4        .    |
-   6  |    .       R7     ~GND_TP     .       Q1C      Q1B      Q1E     ~VBAT  |
-   5  |   R6     ~GPIO8   ~GND_SM     .      -LED+      .        .        .    |
-   4  |   R6*       .      -GND     C1.-     C1.+      R5       R5*    ~GPIO2  |
-   3  |  ~CHRG      .     ~GPIO5    -GND     -LED+     -DI       .        .    |
-   2  |    .     ~GPIO4    J1.2     J1.4     J1.6     J1.8    ~GPIO7      .    |
-   1  |  FISS    -ENC_A    J1.1     J1.3     J1.5x    J1.7     -PULS    FISS   |  <- anteriore
+           A       B       C       D       E       F       G       H
+  20  |   .       .       .       .       .       .      C3-     C3+   |  <- posteriore
+  19  | ~STDBY    .       .       .       .     ~GNDB    -GND   -VBAT  |
+  18  |  R8*     ~DI      .       .       .      -GND    C4      C4    |
+  17  |   R8      R5      .       .      -GND    R11*     .     ~VIBP  |
+  16  |   R9     R5*    ~GNDA    -GND    -GND    R11     R10     R10*  |
+  15  |  R9*      .     ~OUTM    R1*     C1-     C1+      .     -VBAT  |
+  14  |  R7*      .      -GND     R1      .     ~LEDP     R4     R4*   |
+  13  |   R7      .      Q2E     Q2B     Q2C     Q1C     Q1B     Q1E   |
+  12  |   R6      .      R2*      R2     R3*      .       R3    ~OUTP  |
+  11  |  R6*    (ant)   (ant)   (ant)   (ant)   (ant)    D1K     D1A*  |
+  10  | ~CHRG   (ant)   (ant)   (ant)   (ant)   (ant)    -5V      .    |
+   9  |  ~SW     SM7    (ant)   (ant)   (ant)   (ant)    -5V     SM8   |
+   8  | ~VIBIN   SM6      .       .       .       .      -5V     SM9   |
+   7  | ~ENCB    SM5      .       .       .       .      -5V     SM10  |
+   6  | ~ENCA    SM4      .       .       .       .      -5V     SM11  |
+   5  |   .      SM3      .       .       .       .      -5V     SM12  |
+   4  |   C2     SM2      .       .       .       .      -5V     SM13  |
+   3  |   C2     SM1      .       .       .       .      -5V    SM3V3  |
+   2  |   .      SMRX     .       .       .       .      -5V    SMGND  |
+   1  |   .      SMTX     .       .       .       .      -5V     SM5V  |  <- anteriore (USB-C)
 ```
 
-(Nelle righe 12-13 "FISS" indica solo dove cadono i fori posteriori con i valori indicativi.)
+`R1*` = foro su cui poggia il corpo della resistenza in piedi, `~NET` = filo verso l'alto, `-NET` = sola pista sul retro, `SMxx` = pin della SuperMini, `(ant)` = zona antenna.
+
+## SuperMini
+
+- Pin sulle colonne **B** (TX, RX, 1…7) e **H** (5V, GND, 3V3, 13…8), righe 1-9 (file a 15,24 = 6 fori). **Prima di saldare** verificare sulla serigrafia che, con la USB-C verso di sé, la fila **5V/GND/3V3 sia a destra**; se è a sinistra usare `--specchia` (SVG `*_specchiata.svg`) e girare la basetta (lato intatto a destra).
+- Montaggio: **strip maschio standard 2 x 1x9** (plastica 2,5 mm lasciata come distanziale): pin corti nella SuperMini, lunghi nella millefori, tagliati sotto a ~1 mm. Altezza: **6,7 mm** sopra la millefori (2,5 + PCB 1,0 + USB-C 3,2). Robusto per inserire il cavo USB, ispezionabile, lascia passare le piste sotto. Scartati: saldatura diretta a filo (le gambe della USB-C sporgono ~1 mm sotto la SuperMini e non resta posto per le piste) e strip femmina (13 mm, più fragile).
+- PCB della SuperMini: x 4,65-22,65, y 4,28-27,78. **USB-C**: x 9,2-18,1 (centro 13,65), fronte della presa a **y ≈ 0,8** (con sporgenza 3,5 misurata; 3,1 se la sporgenza fosse 1,2): la presa resta **0,8 mm dietro** il bordo della millefori, che non si può accorciare (foro M3 a y 2). Centro della presa ~5,1 mm sopra la faccia superiore della millefori.
+- Sotto la SuperMini nessun componente: solo le piste del 5V (colonna G) e i fili sotto la scheda.
+- **Antenna** (fine della SuperMini, centro-sinistra): zona x 4,8-17,8, y 24,2-32,5 (righe 9-11, colonne B-F) **senza piazzole usate, piste o corpi**; elettrolitici a ≥ 10 mm (C1 a 11,3, C3 a 24,5). I fili sotto la scheda passano **lungo i bordi** (colonne A e H), non sotto l'antenna.
 
 ## Componenti
 
-| Rif. | Valore | Fori (corpo / piedino) | Funzione |
-|------|--------|------------------------|----------|
-| Q1 | S8550 PNP, TO-92 | E = G6, B = F6, C = E6; **faccia piatta verso il posteriore** | interruttore high-side dell'anello |
-| Q2 | 2N3904 NPN, TO-92 | C = D8, B = D9, E = D10; **faccia piatta verso sinistra** (colonna C) | driver di Q1 |
-| R1 | 4,7 kΩ | F9 / E9 | GPIO9 → base Q2 |
-| R2 | 10 kΩ | E11 / E10 | base Q2 → GND |
-| R3 | 680 Ω | D7 / E7 | collettore Q2 → base Q1 |
-| R4 | 10 kΩ | F7 / G7 | base-emettitore Q1 |
-| R5 | 330 Ω | G4 / F4 | serie al dato DI |
-| R6 | 10 kΩ | A4 / A5 | serie CHRG |
-| R7 | 100 kΩ | B7 / B6 | pull-up GPIO8 a 3V3 |
-| R8 | 10 kΩ | B11 / B10 | serie STDBY |
-| R9 | 100 kΩ | B8 / B9 | pull-up GPIO10 a 3V3 |
-| R10 | 220 kΩ | H8 / G8 | partitore, lato VBAT |
-| R11 | 220 kΩ | H11 / H10 | partitore, lato GND |
-| C1 | 47 µF 16 V elettrolitico 5 × 11, in piedi | + = E4, − = D4 | bulk dell'anello dopo Q1 |
-| C2 | 100 nF ceramico | G10 / G11 | filtro partitore (GPIO1) |
-| J1 | pin header 2 × 4 passo 2,54, **angolato** (o diritto, vedi sotto) | C1…F2 | connettore scocca → portaschede |
+| Rif. | Valore | Fori | Funzione |
+|------|--------|------|----------|
+| SM | ESP32-S3 SuperMini | B1-B9, H1-H9 | |
+| D1 | **1N5817** Schottky 1 A, DO-41, in piedi | corpo H11 = **anodo** (OUT+), piedino ripiegato in G11 = **catodo** (fascia in alto) | protezione: la USB della SuperMini non arriva alla cella |
+| Q1 | S8550 PNP | E = H13, B = G13, C = F13, **faccia piatta verso il posteriore** | interruttore anello |
+| Q2 | 2N3904 NPN | E = C13, B = D13, C = E13, **faccia piatta verso l'anteriore** | driver di Q1 |
+| R1 | 4,7 kΩ | D15 / D14 | GPIO9 → base Q2 |
+| R2 | 10 kΩ | C12 / D12 | base Q2 → GND |
+| R3 | 680 Ω | E12 / G12 (piedino lungo sopra F12, libero) | collettore Q2 → base Q1 |
+| R4 | 10 kΩ | H14 / G14 | base-emettitore Q1 |
+| R5 | 330 Ω | B16 / B17 | serie al dato DI |
+| C1 | 47 µF 16 V elettrolitico 5 x 11 | + F15, − E15 | bulk anello |
+| R10 / R11 | 220 kΩ / 220 kΩ | H16 / G16, F17 / F16 | partitore batteria |
+| C2 | 100 nF ceramico | A3 (GPIO1) / A4 (GND della SuperMini) | filtro ADC, vicino al pin |
+| C3 | **47-100 µF 10-16 V** elettrolitico 5 x 11 | + H20, − G20 | **motore vibrazione** |
+| C4 | **100 nF** ceramico | H18 / G18 | **motore vibrazione** |
+| R6 / R8 | 10 kΩ | A11 / A12, A18 / A17 | serie CHRG / STDBY |
+| R7 / R9 | 100 kΩ | A14 / A13, A15 / A16 | pull-up GPIO8 / GPIO10 a 3V3 |
 
-Tutte le resistenze sono **in piedi** (1/4 W, ~10 mm di altezza): il corpo appoggia sul foro indicato per primo, il piedino ripiegato scende nell'altro. Altezze: resistenze ~10, TO-92 ~8, C1 ~11,5 (il più alto, max 12), C2 ~6, J1 angolato 5,1. Lato saldature: piedini tagliati a ~1 mm, ponticelli ~1 mm (≤ 1,5, limite 2).
+Resistenze in piedi (corpo sul primo foro), altezze: elettrolitici 11,5 (massimo), resistenze e diodo ~10, TO-92 ~8, SuperMini 6,7, ceramici ~6, fili ~3. **Tutto ≤ 16**. Lato saldature ≤ 1,8 (piedini a ~1 mm, fili 30 AWG).
 
-I condensatori della vibrazione e l'eventuale pull-down su IN stanno **sul modulo vibrazione**; GPIO6 va con un filo diretto dalla SuperMini al modulo; OUT+/OUT− del TP4056 vanno direttamente a 5V/GND della SuperMini. Su questa schedina arrivano solo un filo VBAT e un filo GND dal TP4056.
+Pull-down 100 kΩ su IN della vibrazione: **non sulla millefori** (non c'è massa vicino a A8); va saldato tra IN e GND sul modulo **solo se** il motore ronza al boot (il modulo provato non ne ha avuto bisogno finora).
 
-## Connettore J1 (scocca → portaschede)
+## Diodo D1: verso e conseguenze
 
-Header maschio 2 × 4 sul bordo anteriore (colonne C-F, righe 1-2), cavo con **Dupont femmina 2 × 4**. Pin 1 = C1, dispari sulla fila esterna (riga 1), pari sulla fila interna (riga 2).
+`OUT+ (VBAT) ── |>|── pin 5V SuperMini`, anodo verso il TP4056. Con la USB della SuperMini collegata (caricamento firmware) il PC alimenta solo la SuperMini, mai la cella. Costo: ~0,3 V in meno al pin 5V (a 3,6 V di cella la SuperMini vede ~3,3 V e il 3V3 scende a ~3,2): **in firmware alzare la soglia di batteria scarica / spegnimento** di ~0,2 V. L'anello, il motore e il partitore restano su VBAT (prima del diodo); con la sola USB e la cella scollegata **anello e vibrazione non si accendono**.
 
-| Pin | Foro | Segnale | Va a (lato scocca) |
-|-----|------|---------|--------------------|
-| 1 | C1 | encoder A → GPIO4 | encoder pin A |
-| 2 | C2 | encoder B → GPIO5 | encoder pin B |
-| 3 | D1 | GND | encoder C + secondo terminale del pulsante (unire sul lato scocca) |
-| 4 | D2 | GND | anello − |
-| 5 | E1 | **chiave**: piedino tagliato a filo, posizione tappata nella spina | - |
-| 6 | E2 | LED+ (anello + commutato) | anello + |
-| 7 | F1 | pulsante → GPIO7 | pulsante |
-| 8 | F2 | DI (dopo la 330 Ω) | anello DI |
+## Fili
 
-- **Chiave**: tagliare il pin 5 dell'header a filo della plastica e tappare la posizione 5 della spina (spezzone di pin incollato o goccia di colla). Girata di 180° la posizione tappata cadrebbe sul pin 4: la spina non entra. In più, segno di vernice sul lato del pin 1 di header e spina (la spina potrebbe ancora entrare spostata di una colonna). Se si preferisce un pin di riserva: `--senza-chiave` fa del pin 5 un terzo GND (ponticello D1-E1) e si usa solo la marcatura.
-- I tre fili dell'anello stanno **affiancati sulla fila interna** (pin 4-6-8 = GND, LED+, DI), con LED+ in mezzo: girando una spina a 3 poli il + resta al suo posto.
-- **Variante angolata (default)**: altezza 5,1 mm, ma pin e spina **sporgono in avanti oltre il bordo anteriore**: ~6 (pin) + ~14 (spina Dupont) + ~5 (curvatura dei fili) ≈ **20-25 mm** nel piano della schedina, a 1-5 mm di quota.
-- **Variante diritta**: stessi fori, nessuna sporgenza in pianta, ma 8,5 mm a vuoto e **~16,5 mm con la spina** + 3-5 di fili: supera i 12 mm (e i 10 della zona critica, che sfiora). Ammissibile solo se il design-3d garantisce ~20 mm liberi sopra le righe 1-2. Lo script la segnala come errore.
-- **Riduzione a 3 poli** (encoder e pulsante cablati direttamente alla SuperMini): montare solo un header 1 × 3 su D2-E2-F2 (angolato o diritto), lasciare vuoti C1, C2, D1, E1, F1, non fare le piste C1-B1-B2, C2-C3, F1-G1-G2 né i fili GPIO4/5/7. Encoder A/B → GPIO4/5, comune C e pulsante → GND, pulsante → GPIO7 direttamente sugli header della SuperMini. Il ponticello D1-D2 non serve (D2 resta collegato a D3). Una spina 1 × 3 Dupont non è polarizzata: marcare il verso (girandola si scambiano solo GND e DI, il + resta al centro).
+Verso l'alto (lato componenti), siliconico 26-28 AWG:
 
-## Fili esterni
+| Foro | Net | Verso |
+|------|-----|-------|
+| H12 | VBAT | TP4056 **OUT+** (24-26 AWG) |
+| C15 | GND | TP4056 **OUT−** (24-26 AWG): **punto di massa comune** (C14-C15) |
+| A10 | CHRG | TP4056 catodo LED rosso (pin 7) |
+| A19 | STDBY | TP4056 catodo LED blu/verde (pin 6) |
 
-Filo siliconico 26-28 AWG (VBAT e GND anche 24-26). Si infilano dal lato componenti e si saldano sotto. Lunghezze indicative: da confermare con il portaschede stampato (lasciare 1-2 cm di abbondanza).
+Sotto la scheda (filo isolato 30 AWG, GND 26 AWG), dalla piazzola del pin della SuperMini alla piazzola indicata, lungo i bordi:
 
-| Foro | Net | Verso | Colore suggerito | Lunghezza |
-|------|-----|-------|------------------|-----------|
-| H6 | VBAT | TP4056 **OUT+** | rosso | 4-6 cm |
-| C6 | GND | TP4056 **OUT−** | nero | 4-6 cm |
-| A3 | CHRG | TP4056, catodo LED rosso (pin 7 del chip) | marrone/bianco | 3-5 cm |
-| A11 | STDBY | TP4056, catodo LED blu/verde (pin 6 del chip) | azzurro/bianco | 3-5 cm |
-| C5 | GND | SuperMini GND | nero | 6-8 cm |
-| A7 | 3V3 | SuperMini 3V3 | arancione | 6-8 cm |
-| H9 | GPIO1 | SuperMini GPIO1 (partitore batteria) | grigio | 6-8 cm |
-| H4 | GPIO2 | SuperMini GPIO2 (dato anello, prima della 330) | bianco | 6-8 cm |
-| B2 | GPIO4 | SuperMini GPIO4 (encoder A) | giallo | 6-8 cm |
-| C3 | GPIO5 | SuperMini GPIO5 (encoder B) | verde | 6-8 cm |
-| G2 | GPIO7 | SuperMini GPIO7 (pulsante) | blu | 6-8 cm |
-| B5 | GPIO8 | SuperMini GPIO8 (CHRG) | marrone | 6-8 cm |
-| G9 | GPIO9 | SuperMini GPIO9 (comando anello) | viola | 6-8 cm |
-| A9 | GPIO10 | SuperMini GPIO10 (STDBY) | azzurro | 6-8 cm |
+| Da (pin SM) | A | Net |
+|-------------|---|-----|
+| H2 (GND) | C14 e A4 | GND (due fili) |
+| H3 (3V3) | A14 | 3V3 |
+| H7 (GPIO10) | A16 | GPIO10 |
+| H8 (GPIO9) | D15 | GPIO9 |
+| H9 (GPIO8) | A12 | GPIO8 |
+| B3 (GPIO1) | G16 | GPIO1 |
+| B4 (GPIO2) | B16 | GPIO2 |
 
-Sulla SuperMini: fila 1 = 5V, GND, 3V3, 13, 12, 11, 10, 9, 8; fila 2 = TX, RX, 1, 2, 3, 4, 5, 6, 7. Sul TP4056 il filo CHRG/STDBY va sul lato del LED verso il chip (catodo): verificare col tester (a USB collegata e LED acceso, il catodo è a ~0,2 V).
+Il 5V va per pista: H1 → G1 … G11 (catodo di D1).
 
-## Ordine di saldatura
+## Connettore verso la scocca: codino + connettore volante 2 x 5 con chiave
 
-1. **Preparazione**: tagliare 8 × 13 fori, limare i bordi. Forare A1 e H1 a Ø2,2. I fori posteriori **solo dopo** aver misurato il TP4056: appoggiare il modulo sotto la schedina nella posizione definitiva e usarlo come dima (righe 12-13). Pulire le piazzole (gomma abrasiva o alcool).
-2. **Verifica dei transistor col tester** (sezione sotto) prima di piegarne i piedini.
-3. **Resistenze in piedi** R1…R11, corpo sul foro indicato per primo; piedini tagliati a ~1 mm dopo la saldatura (conservare gli spezzoni per i ponticelli lunghi).
-4. **C2**, poi **Q2** e **Q1** (orientamento della faccia piatta come nel disegno; piedini allargati a passo 2,54, corpo a ~3 mm dalla basetta).
-5. **J1** (corpo plastico a filo del bordo anteriore se angolato), tagliare il pin 5 se si usa la chiave.
-6. **C1** (+ in E4, − in D4; striscia del − verso la colonna D), corpo appoggiato alla basetta.
-7. **Ponticelli sul retro** seguendo `lato_saldature.svg` (ricordarsi che è specchiato): stagno tra piazzole vicine per i tratti corti, spezzone di filo nudo stagnato per i tratti lunghi (GND C4…C11 e riga 11, LED+ E2…E6). Controllare a ogni net che non tocchi le piazzole adiacenti di altre net (45 coppie vicine).
-8. **Controlli col tester** (sotto), poi **fili esterni**, infine di nuovo i controlli di corto.
+Un header 2 x 5 **diritto** sulla millefori con la spina Dupont è alto ~16,5 mm + 3-5 di curvatura dei fili ≈ **20 mm**, oltre i 16 disponibili; angolato sporgerebbe ~20 mm oltre il bordo. Soluzione: **9 fili saldati sulla millefori** (codino, 15-20 cm) che finiscono in un **alloggiamento Dupont 2 x 5 femmina**; dal lato scocca un alloggiamento 2 x 5 maschio. **Chiave**: posizione 5 tappata nel femmina e pin 5 tagliato nel maschio (girata di 180° la posizione tappata cade sul pin 6: non entra). Segno di vernice sul lato del pin 1.
 
-## Pinout TO-92: verifica e adattamento
+| Pin | Segnale | Foro sulla millefori |
+|-----|---------|----------------------|
+| 1 | encoder A (GPIO4) | A6 |
+| 2 | encoder B (GPIO5) | A7 |
+| 3 | switch encoder (GPIO7) | A9 |
+| 4 | GND encoder (comune C + secondo terminale dello switch) | C16 |
+| 5 | **chiave** | - |
+| 6 | vibrazione IN (GPIO6) | A8 |
+| 7 | anello + commutato (LED+) | F14 |
+| 8 | anello DI (dopo la 330 Ω) | B18 |
+| 9 | vibrazione VCC (VBAT) | H17 |
+| 10 | GND anello + vibrazione | F19 |
 
-Il disegno presuppone **E-B-C** (faccia piatta verso di sé, piedini in basso, da sinistra): così sono il 2N3904 (JEDEC) e la maggior parte degli S8550. Verifica col tester:
-1. **Prova diodi**: trovare il piedino che conduce (~0,6-0,7 V) verso entrambi gli altri = **base**. Puntale nero sulla base = PNP (S8550), rosso = NPN (2N3904). Tra gli altri due nessuna conduzione in nessun verso.
-2. La giunzione **base-emettitore** ha una tensione di qualche mV più alta della base-collettore: così si riconosce l'emettitore.
-3. Conferma con lo zoccolo **hFE** (E-B-C): nel verso giusto 100-300, con C ed E scambiati 5-30.
-
-Se un transistor risulta **E-C-B** (base su un estremo): il disegno non va bene così com'è (`python millefori.py --pinout-q1 ECB` mostra le net che si scambiano). Soluzioni, in ordine di preferenza:
-- usare un altro esemplare/modello del kit che sia E-B-C (S9012 per il PNP; S8050, S9013 per l'NPN): stesse funzioni, vedi `firmware/README.md`;
-- incrociare i piedini B e C (tubetto termorestringente su uno dei due) in modo che la base finisca nel foro centrale (F6 per Q1, D9 per Q2) e il collettore nel foro del collettore (E6 per Q1, D8 per Q2); l'emettitore resta dov'è;
-- se il pezzo fosse **C-B-E** (base al centro ma rovesciato) basta ruotarlo di 180° (faccia piatta dalla parte opposta).
-
-## Controlli col tester prima di alimentare
-
-Schedina senza SuperMini, senza anello, senza batteria. Misure tra le piazzole dei fili (o sui piedini):
-
-| Tra | Atteso | Se diverso |
-|-----|--------|------------|
-| VBAT (H6) - GND (C6) | ~440 kΩ (sale lentamente: C2 si carica) | se < 100 kΩ: corto, cercare stagno tra net vicine |
-| VBAT (H6) - GPIO1 (H9) | ~220 kΩ | R10 |
-| GPIO1 (H9) - GND | ~220 kΩ | R11, C2 |
-| VBAT (H6) - Q1 base (F6) | ~10 kΩ | R4 |
-| GPIO9 (G9) - GND | ~14,7 kΩ (R1 + R2) | |
-| Q2 collettore (D8) - Q1 base (F6) | ~680 Ω | R3 |
-| GPIO2 (H4) - J1 pin 8 | ~330 Ω | R5 |
-| GPIO8 (B5) - CHRG (A3) / GPIO10 (A9) - STDBY (A11) | ~10 kΩ | R6 / R8 |
-| GPIO8 - 3V3 (A7) / GPIO10 - 3V3 | ~100 kΩ | R7 / R9 |
-| J1 pin 6 (LED+) - GND | aperto (dopo la carica di C1) | mai 0 Ω |
-| J1 pin 6 (LED+) - VBAT | aperto | Q1 montato male o in corto |
-| J1 pin 1, 2, 7 - GPIO4, GPIO5, GPIO7 | 0 Ω | |
-| J1 pin 3 e 4 - GND | 0 Ω | |
-| 3V3 - GND, 3V3 - VBAT | aperto | |
-| ogni piazzola - fori di fissaggio | aperto | |
-
-Con resistenze di centinaia di kΩ il tester può leggere valori un po' più bassi se le punte toccano le dita.
-
-## Prima accensione sicura
-
-1. **Alimentatore da banco** a 3,7 V con limite di corrente 50 mA su VBAT (H6) / GND (C6); in mancanza, cella 18650 con una resistenza da 22 Ω in serie (limita un corto a ~190 mA). SuperMini e anello **scollegati**.
-2. Corrente a riposo: ~8-9 µA (solo il partitore). GPIO1 (H9) = VBAT / 2. LED+ (J1 pin 6) ≈ 0 V.
-3. Collegare GPIO9 (G9) a 3,3 V (un secondo canale dell'alimentatore, o 3V3 della SuperMini alimentata via USB **senza batteria**): LED+ sale a VBAT − 0,1-0,2 V; corrente in più ~4-5 mA (base di Q1). GPIO9 a GND: LED+ torna a 0 (lentamente senza carico: C1 si scarica solo nelle perdite; con una resistenza da 1 kΩ tra LED+ e GND scende subito).
-4. Collegare l'anello con GPIO9 basso; poi tutto il resto. Prima del flash della SuperMini via USB, **batteria scollegata** (vedi `firmware/README.md`, Alimentazione).
+Dispari su una fila, pari sull'altra. Alternativa a profilo basso, se si accetta un acquisto: box header IDC 2 x 5 schermato + cavo piatto (~13 mm, chiave intrinseca), ma occupa ~24 fori: non sta.
 
 ## Fissaggio
 
-- 4 viti M2 (anteriori A1 e H1, posteriori nei fori del TP4056). Colonnine stampate o **distanziali in nylon**: con distanziali metallici la parte metallica toccherebbe le piazzole vicine (B1 = encoder A, G1 = pulsante); in quel caso portare `R_LIBERO` a 3,0 e lo script segnalerà i fori da spostare.
-- Distanza tra TP4056 e schedina: il lato saldature (≤ 2 mm) deve stare sopra la parte più alta del TP4056 (USB-C ~3,2-3,5 mm sopra il suo PCB) con 0,5-1 mm d'aria: distanziali di ~6-7 mm sopra il PCB del TP4056 (da definire col design-3d).
+2 fori **M3 originali** sul lato intatto, **da misurare** (valori del modello: Ø3,2, centri a (2,0; 2,0) e (2,0; 58,0)). Viti M3 a testa bassa (ISO 7380 / DIN 7985, testa Ø5,5); nessuna piazzola usata entro 3,65 mm. Il lato destro (tagliato) va appoggiato su una battuta o su 1-2 perni del portaschede (fori liberi: B12-B15, C17-C20, D17-D20, E18-E20): da definire con design-3d.
+
+## Ordine di saldatura
+
+1. Taglio e pulizia; segnare A1 sulla faccia componenti.
+2. Prova del pinout dei TO-92 col tester (vedi `archivio_8x13/README.md`, stessa procedura).
+3. Piste del retro (`lato_saldature.svg`, specchiato), compresa la colonna G del 5V **prima** della SuperMini (dopo non si raggiunge più dall'alto).
+4. Strip maschio e **SuperMini** (USB-C in avanti, controllo della fila 5V a destra).
+5. Resistenze, D1 (fascia in alto, piedino in G11), TO-92, ceramici, elettrolitici.
+6. Fili sotto la scheda lungo i bordi; fili verso il TP4056; codino.
+7. Controlli col tester: VBAT-GND ~440 kΩ (partitore), 5V-GND aperto, VBAT → 5V ≈ 0,15-0,3 V in prova diodi (al contrario aperto), LED+ isolato da VBAT e GND, nessun corto tra piazzole vicine (53 coppie).
+8. Prima accensione con alimentatore limitato (3,7 V, 100 mA) su OUT+/OUT−; poi la USB della SuperMini.

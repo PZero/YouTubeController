@@ -8,7 +8,7 @@ Codice del controller: lettura di encoder e pulsante, invio dei tasti via BLE HI
 |----------|-----------|
 | [`controller/`](controller/README.md) | **firmware v0** (2026-10-14): gesti, anello, vibrazione, tastiera BLE HID ("YouTube Controller", Just Works), WiFi di casa in NVS, portale `YTController-XXXX` su http://192.168.4.1/ (password AP pubblica `ytcontroller`, non un segreto), OTA manuale (`/update`) e da GitHub Release; log seriali con prefissi stabili e `monitor.html` |
 | [`test_comandi/`](test_comandi/README.md) | prova su breadboard di encoder, pulsante, anello e vibrazione |
-| [`millefori/`](millefori/README.md) | layout della schedina |
+| [`millefori/`](millefori/README.md) | **millefori unica 8 x 20 con la SuperMini saldata sopra** (2026-10-15): layout, verifica, SVG 1:1; la vecchia 8 x 13 in `millefori/archivio_8x13/` |
 
 Partizioni: **`PartitionScheme=min_spiffs`** (2 slot OTA da 1,9 MB). Formato dei log, scelte di riscontro e limiti: `controller/README.md`.
 
@@ -229,7 +229,9 @@ Schema di alimentazione (decisione 2026-10-09: **niente diodo**; schema completo
 | C. Interruttore a slitta su OUT+ (SS12D00) | serve comunque come ON/OFF, zero caduta | protegge solo se è spento durante il flash | ~0,1-0,2 € |
 | B + C | sicuro e con interruttore generale | caduta del diodo | ~0,2-0,3 € |
 
-  **Decisione (2026-10-09): A**, niente diodo né interruttore. La scheda va al PC solo per il primo flash, con la batteria scollegata; poi solo OTA. Se un giorno servisse di nuovo il cavo (recupero estremo), **scollegare prima la batteria**: con OUT+ cablato al pin 5V i 5 V del PC andrebbero sulla cella. Un "diodo ideale" a P-MOSFET non è applicabile in modo semplice perché VBUS e pin 5V sono lo stesso nodo.
+  **Aggiornamento 2026-10-15: si monta il diodo (opzione B)**, Schottky **1N5817** (DO-41, 1 A) con l'anodo su OUT+ e il catodo verso il pin 5V, sulla millefori (D1): la USB si usa di continuo per caricare il firmware. Prezzo: ~0,3 V in meno al pin 5V (soglie batteria del firmware da alzare di ~0,2 V); anello, motore e partitore restano su VBAT, prima del diodo. Nello schema qui sotto il tratto OUT+ → pin 5V passa quindi da D1.
+
+  Decisione precedente (2026-10-09): A, niente diodo né interruttore. La scheda va al PC solo per il primo flash, con la batteria scollegata; poi solo OTA. Se un giorno servisse di nuovo il cavo (recupero estremo), **scollegare prima la batteria**: con OUT+ cablato al pin 5V i 5 V del PC andrebbero sulla cella. Un "diodo ideale" a P-MOSFET non è applicabile in modo semplice perché VBUS e pin 5V sono lo stesso nodo.
 
 Valori elettrici (datasheet; i cloni possono differire):
 
@@ -401,7 +403,7 @@ Uso in firmware:
    GPIO6 ────────────────── IN ┘   (+ 100 kΩ IN→GND se il modulo non ha pull-down)
 ```
 
-Tutto ciò che non è la SuperMini o il modulo 4056 (transistor, resistenze, condensatori, connettore) sta su una **schedina millefori** sul portaschede (quote indicative in `enclosure/dimensioni.md`). Layout, piste, verifica automatica e ordine di saldatura: [`millefori/`](millefori/README.md).
+**Dal 2026-10-15 SuperMini e interfaccia stanno su un'unica millefori 8 x 20** (22,5 x 60, piatta nella corsia sinistra del portaschede, SuperMini saldata sopra su strip maschio): in più rispetto allo schema sopra ci sono **D1** 1N5817 (OUT+ → pin 5V), **C3** 47-100 µF + **C4** 100 nF tra VBAT e GND per il motore, C2 spostato accanto al pin GPIO1. Il modulo vibrazione è **sulla scocca**: VCC (VBAT), IN (GPIO6) e GND passano dal connettore verso la scocca, che diventa un **codino di 9 fili con connettore volante Dupont 2 x 5 con chiave** (pin 1 encoder A, 2 encoder B, 3 switch encoder, 4 GND encoder, 5 chiave, 6 vibrazione IN, 7 LED+, 8 DI, 9 vibrazione VCC, 10 GND anello + vibrazione). Massa comune: OUT− del TP4056 sulla millefori (C14-C15), da lì la SuperMini (filo dal suo pin GND), l'anello, il motore e l'encoder. Il pulsante è lo switch integrato dell'encoder (stesso GPIO7). Layout, fili, taglio, verifica automatica e ordine di saldatura: [`millefori/`](millefori/README.md).
 
 Connettore anello (sulla scocca) ↔ portaschede:
 
