@@ -8,7 +8,7 @@ Controller fisico per YouTube su iPad: **una sola manopola, che si gira e si pre
 
 ![Controller montato](docs/render/render_montato.png)
 
-> Stato: in sviluppo. PWA utilizzabile; ESP32 arrivato, prototipo del firmware in partenza; scatola alla seconda versione (anello LED, vibrazione, PLA).
+> Stato: in sviluppo. Il controller funziona già come tastiera Bluetooth con l'iPad (firmware v0.1.3: manopola, gesti, anello LED, vibrazione, autospegnimento); PWA 1.1.4; scatola V1 pronta da stampare. PCB per JLCPCB progettato (`pcb/`), ordine rimandato.
 > Dettagli aggiornati in [`docs/STATO.md`](docs/STATO.md).
 
 ## Come funziona
@@ -78,6 +78,7 @@ Riferimento unico: [`app/js/keymap.js`](app/js/keymap.js).
 
 Schema dei collegamenti, GPIO, consumi e piano OTA: [`firmware/README.md`](firmware/README.md).
 Schedina millefori di interfaccia (layout, piste, ordine di saldatura): [`firmware/millefori/`](firmware/millefori/README.md).
+Circuito stampato per JLCPCB (Gerber, BOM, CPL): [`pcb/`](pcb/AVANZAMENTO.md).
 Lista componenti con costi e alternative: [`docs/BOM.md`](docs/BOM.md).
 
 **Aggiornamenti del firmware:** primo caricamento via USB (con la batteria scollegata), poi via WiFi (OTA): il firmware è compilato da GitHub Actions e pubblicato nelle *Releases*; con il gesto di aggiornamento il controller lo scarica da solo. Nessuna password nel firmware: la rete del controller e il WiFi di casa si configurano sulla scheda.

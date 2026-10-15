@@ -39,3 +39,5 @@ Fonti: [espboards.dev](https://espboards.dev/boards/esp32-s3-supermini), [Otroni
 - Batteria: pad BAT+/BAT- sul retro + caricatore TP4054 e diodo BAT60B (schema Nologo) (100 mA, nessuna protezione della cella; jumper BOOST a 300 mA su alcune). **Da verificare** se presente sui nostri esemplari.
 - LED: WS2812 RGB su GPIO48; LED rosso indicato anch'esso su GPIO48 (fonti dubbie); LED blu di carica non pilotabile.
 - Consumi: deep sleep ~43 µA dichiarati per la scheda (espboards); BLE connesso stimato 20-50 mA senza risparmio energetico (da misurare).
+
+**V1 (2026-10-15)**: montaggio semplificato come nei test: niente interruttore a transistor dell'anello, niente lettura CHRG/STDBY né partitore; al posto del diodo Schottky (non disponibile) un interruttore interno sul + dopo il TP4056. Componenti del PCB JLCPCB (SMD con codici LCSC) in `pcb/jlcpcb/BOM.csv`.

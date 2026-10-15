@@ -1,39 +1,35 @@
 # Stato del progetto
 
-_Ultimo aggiornamento: 2026-10-11_
+_Ultimo aggiornamento: 2026-10-15_
 
 ## Fase attuale
-**Fase 1 (prototipo firmware) in partenza; PWA completa (fase 2); scatola alla seconda versione (fase 3).** ESP32 arrivato.
+**Fase 1 quasi chiusa, assemblaggio V1 in corso.** Firmware v0.1.3 funzionante con l'iPad; PWA 1.1.4; scatola V1 pronta da stampare.
 
 ## Fatto
-- Fase 0: tastiera BLE su iPad validata (tasti sempre ricevuti, nessuna strategia di focus; la tastiera a schermo compare toccando un campo).
-- **PWA completa** online: https://pzero.github.io/YouTubeController/ — ricerca (chiave API sul dispositivo), preferiti con loop A-B, seek a 3 velocità con accumulo e un solo seekTo, loop A-B, schermo pieno automatico, sezione Controller, icona. Mappa tasti in `app/js/keymap.js`.
-- Decisi: tasti (←/→, Shift, Alt, Spazio, L), gesti (breve/media/10 s/2 s risveglio, pulsante+5 scatti avanti = OTA, indietro = reset WiFi), OTA via GitHub Release + WiFi di casa opzionale, R3 2,4 kΩ (0,5 A).
-- Nuovi componenti: **anello WS2812B 16 LED** attorno alla manopola (diffusore stampato a parte) e **modulo vibrazione**; interruttore anello S8550 + 2N3904 (kit); lettura carica CHRG/STDBY con resistenze. Schema in `firmware/README.md`.
-- **Millefori** 8×13 coricata sopra il TP4056: layout, piste e verifica automatica in `firmware/millefori/` (verifica OK).
-- Scatola: anello, diffusore, vibrazione, ganci rifatti per **PLA**, verifica interferenze = 0; esportazione per Bambu Studio/MakerWorld (`enclosure/export/esporta.py`, zip di prova consegnato).
-- Tenuto il TP4056 (cella Jesspow 3300 mAh **non protetta**, Ø18,5×65); caricabatterie della SuperMini non usato.
-- README del repository con foto (senza EXIF) e render; licenza MIT (MakerWorld: CC BY 4.0).
-- Subagenti con modello dedicato per risparmiare token: app-pwa e design-3d su Sonnet, elettronica-firmware su Opus.
+- Fase 0: tastiera BLE su iPad validata.
+- **Firmware v0.1.3** (`firmware/controller/`): tastiera BLE HID che funziona con l'iPad (cifratura e bonding, ricollegamento automatico), encoder in interrupt (20 scatti/giro), 3 velocità, gesti (breve, media, 10 s, OTA, reset WiFi), anello LED, vibrazione a ogni scatto (impulsi a piena potenza da 60 ms), portale WiFi, OTA manuale `/update`, **autospegnimento dopo 5 min** con conto alla rovescia rosso (32 s) e risveglio tenendo premuto 2 s. Log seriale + `monitor.html` (Web Serial).
+- Prove su breadboard: `firmware/test_comandi/` (encoder, pulsante, anello, vibrazione).
+- **PBS-110 eliminato**: si usa il pulsante integrato dell'encoder (GPIO7).
+- **PWA 1.1.4**: video predefinito all'avvio, schermo pieno senza bande (modalità Riempi) con barra a scomparsa, focus sempre ai comandi in schermo pieno, aggiornamento automatico anche dall'icona Home.
+- **Scatola V1** (`enclosure/`, zip in `enclosure/export/`): vibrazione agganciata sotto la faccia superiore, millefori libera nella corsia sinistra (max ~22,8×60×15), fronte liscio, USB-C del TP4056 sul retro, interferenze 0. Colori: corpo nero, manopola/pannelli rame, diffusore bianco, prove in grigio.
+- **V1 elettronica semplificata** (come nei test): anello e vibrazione dal pin 5V (= batteria), niente transistor né lettura carica; interruttore interno sul + al posto del diodo.
+- Millefori 8×20 con SuperMini saldata progettata e verificata (`firmware/millefori/`, per la versione completa).
+- **PCB JLCPCB v1** pronto (`pcb/jlcpcb/`: Gerber, BOM, CPL corretti, DRC 0): **ordine rimandato** (~40 € con spedizione).
 
 ## Prossimi passi
-1. **Prototipo su breadboard** (piano proposto, in attesa di ok): arduino-cli + core ESP32 3.x + libreria BLE keyboard; firmware v0 con encoder (3 velocità) e pulsante (breve/media); prova con la PWA sull'iPad e taratura soglie. Chiedere: breadboard/Dupont, fili su encoder e pulsante, ok a scaricare arduino-cli.
-2. Misure col calibro → **design-3d** sposta la millefori nel portaschede (colonnine sopra il TP4056, via le guide in piedi) e aggiorna lo zip completo.
-3. Stampa dello zip di prova (tolleranze PLA, scatto anello e diffusore).
+1. Finire la prova della sospensione: spegnimento a 5 min e risveglio (pressione breve = niente, 2 s = accende).
+2. Misurare lo spessore PCB del modulo vibrazione, poi stampare la scatola V1 (prima il piatto grigio di prova) e assemblare.
+3. Provare in schermo pieno la PWA 1.1.4 col controller senza toccare lo schermo; tarare le soglie delle 3 velocità (oggi "veloce" già a ~5 scatti/s).
 
 ## Problemi aperti
-- **Misure mancanti**: interasse fori TP4056 (serve alla millefori); lunghezza del solo PCB della SuperMini (27 totale con USB-C: la presa sporgerebbe ~3,5 invece di 1,2-2,2); spessore PCB anello e raggio dei LED; resistenze del kit (lunghezza/diametro); posizione del motore sul modulo vibrazione; misure già in lista (encoder, PBS-110, contatti cella).
-- `enclosure/dimensioni.md` descrive ancora la millefori **in piedi** (modello non aggiornato alla posizione sopra il TP4056).
-- Caricabatterie integrato della SuperMini (pad B+/B−) alimentato dal pin 5V: misurare il consumo in standby.
-- Tasti F13–F16 (avvisi alla PWA) da aggiungere a `keymap.js` e da verificare su iPadOS.
-- Da verificare sul prototipo: pinout S8550 col tester, anello spento al boot, dato anello a 4,2 V, pull-down/LED di alimentazione del modulo vibrazione, portata BLE vicino alla 18650, primo play da tasto.
-- TP4056 coperto dalla millefori: controllare la temperatura in carica (PLA ~55 °C).
-- Primo flash con la batteria scollegata.
-- Da comprare: viti M3x8 ×8, M2 (TP4056 + millefori), distanziali nylon M2, contatti 18650; verificare in casa millefori, Dupont 2×4, condensatori (2 elettrolitici 47–100 µF, 3 da 100 nF).
+- **Sicurezza batteria**: senza diodo, aprire l'interruttore interno PRIMA di collegare la USB della SuperMini.
+- Anello sempre alimentato in V1: ~10-16 mA anche spento e in sospensione (autonomia da fermo ~10 giorni).
+- Log `BLE SICUREZZA errore 13` ogni tanto, connessione comunque funzionante: da capire.
+- Annullamento del conto alla rovescia e risveglio "puliti" non ancora provati (la cattura seriale riavvia la scheda: non aprire la porta durante la prova).
+- Manca il workflow GitHub per le Release (OTA da GitHub risponde 404); soglie batteria da alzare di 0,2 V col diodo.
+- Tasti F13–F16 da aggiungere a `app/js/keymap.js`.
+- PCB v2 (futuro): driver vibrazione integrato, piste lontane dall'antenna, eventuale caricatore integrato.
+- Misure ancora da prendere: spessore PCB vibrazione, sporgenza USB-C SuperMini, fori M3 della millefori.
 
 ## Fasi previste
-0. Avvio e prototipo di validazione (fatto)
-1. Firmware funzionante su breadboard
-2. PWA: ricerca e player controllato da tastiera (fatta, da provare col controller)
-3. Scatola 3D (scocca + portaschede modulare) e assemblaggio
-4. Rifiniture e pubblicazione su MakerWorld
+0. Validazione (fatto) · 1. Firmware su breadboard (quasi fatto) · 2. PWA (fatta, rifiniture) · 3. Scatola e assemblaggio V1 (in corso) · 4. Rifiniture, PCB, pubblicazione su MakerWorld
