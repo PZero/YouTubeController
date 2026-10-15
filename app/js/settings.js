@@ -9,6 +9,7 @@ const DEFAULTS = {
   apiKey: '',
   steps: { fine: 1, medium: 5, fast: 30 },
   autoFullscreen: true,
+  fsMode: 'fill', // 'fill' = riempi (taglia i bordi), 'fit' = adatta (bande nere)
 };
 
 const stored = loadJson(KEY, {});
@@ -49,6 +50,7 @@ export function initSettingsDialog(opts) {
     $('setStepMed').value = settings.steps.medium;
     $('setStepFast').value = settings.steps.fast;
     $('setAutoFs').checked = settings.autoFullscreen;
+    $('setFsMode').value = settings.fsMode;
     renderControllerInfo($('controllerInfo'), settings.steps);
   }
 
@@ -61,6 +63,7 @@ export function initSettingsDialog(opts) {
       fast: readStep('setStepFast', DEFAULTS.steps.fast),
     };
     settings.autoFullscreen = $('setAutoFs').checked;
+    settings.fsMode = $('setFsMode').value === 'fit' ? 'fit' : 'fill';
     saveSettings();
     renderControllerInfo($('controllerInfo'), settings.steps);
     opts.onChange && opts.onChange();

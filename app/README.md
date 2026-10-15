@@ -66,6 +66,8 @@ come link, nessuna richiesta diretta. Dati e testi in un solo punto: `js/control
 (da aggiornare quando cambia il firmware, ancora in sviluppo).
 
 ## Schermo pieno
+
+Da 1.1.2 a schermo pieno il video occupa tutto lo schermo e la barra è sovrapposta in basso (si nasconde dopo 3 s, riappare a ogni comando o tocco). Opzione "Riempi" (predefinita, taglia i bordi) o "Adatta" (bande nere) nelle impostazioni.
 È quello della PWA sul contenitore del player, **mai** quello nativo di YouTube (`fs=0`), che
 sottrarrebbe i tasti alla pagina. Su iPadOS si usa solo il "pseudo-fullscreen" CSS
 (`position: fixed; inset: 0`): nell'app installata nella Home è già a tutto schermo, non serve un

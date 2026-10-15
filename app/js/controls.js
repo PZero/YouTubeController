@@ -13,6 +13,8 @@ const PLAY_CHECK_MS = 1200;
 const TICK_MS = 100;
 // B deve stare almeno a questa distanza da A
 const MIN_LOOP_S = 0.5;
+// In schermo pieno la barra si nasconde dopo questo tempo senza comandi (ms)
+const UI_HIDE_MS = 3000;
 
 // deps: { player, fs, settings, isDialogOpen(), onLoopChange(a, b) }
 export function createControls(deps) {
@@ -232,6 +234,18 @@ export function createControls(deps) {
   $('progress').addEventListener('pointerup', endDrag);
   $('progress').addEventListener('pointercancel', () => { dragT = null; render(); });
 
+  // ---------------- barra sovrapposta (schermo pieno) ----------------
+  // In schermo pieno la barra sta sopra il video e si nasconde dopo UI_HIDE_MS senza comandi.
+  const stageEl = $('stage');
+  let uiTimer = null;
+  function uiVisible() { return !stageEl.classList.contains('ui-hidden'); }
+  function pokeUi() {
+    clearTimeout(uiTimer);
+    stageEl.classList.remove('ui-hidden');
+    if (fs.on) uiTimer = setTimeout(() => stageEl.classList.add('ui-hidden'), UI_HIDE_MS);
+  }
+  $('progress').addEventListener('pointerdown', pokeUi, true);
+
   // ---------------- tastiera ----------------
   function onKeyDown(e) {
     if (deps.isDialogOpen()) return;              // il dialog gestisce i suoi tasti
@@ -241,6 +255,7 @@ export function createControls(deps) {
     }
     const m = resolveKey(e);
     if (!m) return;
+    pokeUi();
     e.preventDefault();                           // niente scroll con frecce/spazio, niente clic su pulsanti
     if (e.repeat && m.action !== 'seek') return;  // tenendo premuto ripete solo il seek
     switch (m.action) {
@@ -255,6 +270,6 @@ export function createControls(deps) {
   }
   window.addEventListener('keydown', onKeyDown, true);
 
-  return { onState, toggle, play, pause, loopStep, setLoop, armPlayCheck, showPlayInvite, render,
+  return { onState, toggle, play, pause, loopStep, setLoop, armPlayCheck, pokeUi, uiVisible, showPlayInvite, render,
     get loop() { return { ...loop }; } };
 }

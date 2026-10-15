@@ -7,7 +7,7 @@ import { createPlayerController, playerErrorText, STATE } from './player.js';
 import { createFullscreen } from './fullscreen.js';
 import { createControls } from './controls.js';
 
-export const APP_VERSION = '1.1.1'; // allineare a CACHE_VERSION in sw.js
+export const APP_VERSION = '1.1.2'; // allineare a CACHE_VERSION in sw.js
 const LAST_KEY = 'ytc.last.v1';
 // Video caricato all'avvio quando non c'e' un ultimo video (primo avvio): pronto per provare il controller
 const DEFAULT_VIDEO = { id: 'aqz-KE-bpKQ', title: 'Big Buck Bunny', channel: 'Blender' };
@@ -19,7 +19,8 @@ let playSession = false;   // true dal PLAYING fino a pausa/fine (per lo schermo
 // ---------------- moduli ----------------
 const fs = createFullscreen($('stage'), (on) => {
   $('btnFull').setAttribute('aria-label', on ? 'Esci dallo schermo pieno' : 'Schermo pieno');
-});
+  controls.pokeUi(); // entrando mostra la barra per qualche secondo; uscendo la ripristina
+}, () => settings.fsMode !== 'fit');
 
 const player = createPlayerController('player', {
   onReady: () => controls.render(),
@@ -43,7 +44,7 @@ const controls = createControls({
 const dlg = initSettingsDialog({
   onExport: exportFavoritesFile,
   onImport: importFavoritesFile,
-  onChange: () => {},
+  onChange: () => fs.layout(),
 });
 
 // ---------------- caricamento video ----------------
@@ -251,7 +252,12 @@ $('btnFull').addEventListener('click', () => fs.toggle(true));
 $('btnFav').addEventListener('click', () => { if (current) toggleFavorite(current); else toast('Nessun video caricato'); });
 $('btnSettings').addEventListener('click', () => dlg.open());
 // Tocco sul video: schermo pieno on/off (l'overlay evita che l'iframe riceva i tocchi)
-$('tapOverlay').addEventListener('click', () => { if (current) fs.toggle(true); });
+// In schermo pieno con la barra nascosta, il primo tocco la mostra; a barra visibile il tocco esce.
+$('tapOverlay').addEventListener('click', () => {
+  if (!current) return;
+  if (fs.on && !controls.uiVisible()) { controls.pokeUi(); return; }
+  fs.toggle(true);
+});
 
 // Dopo un tocco su un pulsante (fuori dal dialog) il focus torna al documento:
 // cosi' Spazio/Invio non "ripremono" il pulsante e vanno ai comandi.
